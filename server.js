@@ -28,7 +28,9 @@ io.on("connection", (socket) => {
 
     console.log("Jugador conectado:", socket.id);
 
+    // =========================
     // CREAR SALA
+    // =========================
     socket.on("crearSala", () => {
 
         let codigo;
@@ -42,7 +44,6 @@ io.on("connection", (socket) => {
         socket.join(codigo);
         socket.sala = codigo;
 
-        // Crear jugador
         const jugador = {
             id: socket.id,
             x: 200,
@@ -62,7 +63,9 @@ io.on("connection", (socket) => {
     });
 
 
+    // =========================
     // UNIRSE A SALA
+    // =========================
     socket.on("unirseSala", (codigoRecibido) => {
 
         const codigo = String(codigoRecibido)
@@ -84,7 +87,6 @@ io.on("connection", (socket) => {
         socket.join(codigo);
         socket.sala = codigo;
 
-        // Posición inicial diferente
         const jugador = {
             id: socket.id,
             x: 600,
@@ -104,7 +106,9 @@ io.on("connection", (socket) => {
     });
 
 
+    // =========================
     // MOVIMIENTO
+    // =========================
     socket.on("moverJugador", (posicion) => {
 
         if (!socket.sala) return;
@@ -120,12 +124,13 @@ io.on("connection", (socket) => {
         jugador.x = posicion.x;
         jugador.y = posicion.y;
 
-        // Mandar las posiciones a todos los jugadores
         enviarJugadores(socket.sala);
     });
 
 
+    // =========================
     // DESCONECTARSE
+    // =========================
     socket.on("disconnect", () => {
 
         if (!socket.sala) return;
@@ -160,8 +165,12 @@ function enviarJugadores(codigo) {
 }
 
 
+// =========================
+// INICIAR SERVIDOR
+// =========================
+
 const PORT = process.env.PORT || 3000;
 
-server.listen(PORT, "0.0.0.0," => {
+server.listen(PORT, "0.0.0.0", () => {
     console.log(`Servidor iniciado en http://localhost:${PORT}`);
 });
