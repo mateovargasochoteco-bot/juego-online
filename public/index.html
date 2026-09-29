@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Juego Online</title>
+
+<style>
+
+/* =========================
+   GENERAL
+========================= */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #111;
+    color: white;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+
+/* =========================
+   MENU
+========================= */
+
+#menu {
+    width: 400px;
+    max-width: 90%;
+    margin: 60px auto;
+    padding: 30px;
+    background: #2c3038;
+    border-radius: 15px;
+    text-align: center;
+}
+
+input,
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+button {
+    background: #4caf50;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #45a049;
+}
+
+#mensaje {
+    color: #ffd166;
+}
+
+
+/* =========================
+   JUEGO
+========================= */
+
+#juego {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+}
+
+
+/* =========================
+   INFORMACION
+========================= */
+
+#informacion {
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 8px;
+    text-align: center;
+    background: rgba(0,0,0,.9);
+    border-bottom: 2px solid white;
+}
+
+#informacion h2 {
+    margin: 2px;
+}
+
+#informacion p {
+    margin: 3px;
+}
+
+#codigoSala {
+    color: #ffd166;
+    letter-spacing: 4px;
+}
+
+
+/* =========================
+   CAMARA
+========================= */
+
+#camara {
+    position: fixed;
+    top: 82px;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - 82px);
+    overflow: hidden;
+    background: #222;
+}
+
+
+/* =========================
+   MAPA
+========================= */
+
+#mapa {
+    position: absolute;
+
+    width: 1400px;
+    height: 900px;
+
+    left: 0;
+    top: 0;
+
+    background: #555;
+
+    transform-origin: center center;
+
+    transition:
+        left .08s linear,
+        top .08s linear,
+        transform .25s ease;
+}
+
+
+/* =========================
+   HABITACIONES
+========================= */
+
+.habitacion {
+    position: absolute;
+    background: #777;
+    z-index: 2;
+}
+
+
+/* HABITACION 1 */
+
+#habitacion1 {
+    left: 50px;
+    top: 50px;
+    width: 350px;
+    height: 300px;
+}
+
+
+/* HABITACION 2 */
+
+#habitacion2 {
+    left: 525px;
+    top: 50px;
+    width: 350px;
+    height: 300px;
+}
+
+
+/* HABITACION 3 */
+
+#habitacion3 {
+    left: 1050px;
+    top: 50px;
+    width: 300px;
+    height: 300px;
+}
+
+
+/* HABITACION 4 */
+
+#habitacion4 {
+    left: 50px;
+    top: 500px;
+    width: 350px;
+    height: 350px;
+}
+
+
+/* HABITACION 5 */
+
+#habitacion5 {
+    left: 525px;
+    top: 500px;
+    width: 350px;
+    height: 350px;
+}
+
+
+/* HABITACION 6 */
+
+#habitacion6 {
+    left: 1050px;
+    top: 500px;
+    width: 300px;
+    height: 350px;
+}
+
+
+/* =========================
+   PASILLOS
+========================= */
+
+.pasillo {
+    position: absolute;
+    background: #555;
+    z-index: 1;
+}
+
+
+/* Horizontal superior */
+
+.pasillo1 {
+    left: 400px;
+    top: 175px;
+    width: 125px;
+    height: 80px;
+}
+
+
+/* Horizontal superior derecha */
+
+.pasillo2 {
+    left: 875px;
+    top: 175px;
+    width: 175px;
+    height: 80px;
+}
+
+
+/* Horizontal inferior */
+
+.pasillo3 {
+    left: 400px;
+    top: 625px;
+    width: 125px;
+    height: 80px;
+}
+
+
+/* Horizontal inferior derecha */
+
+.pasillo4 {
+    left: 875px;
+    top: 625px;
+    width: 175px;
+    height: 80px;
+}
+
+
+/* Vertical izquierdo */
+
+.pasillo5 {
+    left: 185px;
+    top: 350px;
+    width: 80px;
+    height: 150px;
+}
+
+
+/* Vertical central */
+
+.pasillo6 {
+    left: 660px;
+    top: 350px;
+    width: 80px;
+    height: 150px;
+}
+
+
+/* Vertical derecho */
+
+.pasillo7 {
+    left: 1160px;
+    top: 350px;
+    width: 80px;
+    height: 150px;
+}
+
+
+/* =========================
+   PAREDES
+========================= */
+
+.pared {
+    position: absolute;
+    background: #171717;
+    border: 2px solid #333;
+    z-index: 20;
+}
+
+
+/*
+    IMPORTANTE:
+
+    Las paredes están cortadas
+    donde existe una puerta.
+
+    Por eso las puertas NO
+    tienen colisión.
+*/
+
+
+/* =========================
+   HABITACION 1
+========================= */
+
+/* arriba */
+
+.p1 {
+    left: 50px;
+    top: 50px;
+    width: 350px;
+    height: 14px;
+}
+
+/* abajo */
+
+.p2 {
+    left: 50px;
+    top: 336px;
+    width: 350px;
+    height: 14px;
+}
+
+/* izquierda */
+
+.p3 {
+    left: 50px;
+    top: 50px;
+    width: 14px;
+    height: 300px;
+}
+
+/* derecha - arriba */
+
+.p4a {
+    left: 386px;
+    top: 50px;
+    width: 14px;
+    height: 110px;
+}
+
+/* derecha - abajo */
+
+.p4b {
+    left: 386px;
+    top: 240px;
+    width: 14px;
+    height: 110px;
+}
+
+
+/* =========================
+   HABITACION 2
+========================= */
+
+.p5 {
+    left: 525px;
+    top: 50px;
+    width: 350px;
+    height: 14px;
+}
+
+.p6 {
+    left: 525px;
+    top: 336px;
+    width: 350px;
+    height: 14px;
+}
+
+.p7a {
+    left: 525px;
+    top: 50px;
+    width: 14px;
+    height: 110px;
+}
+
+.p7b {
+    left: 525px;
+    top: 240px;
+    width: 14px;
+    height: 110px;
+}
+
+.p8a {
+    left: 861px;
+    top: 50px;
+    width: 14px;
+    height: 110px;
+}
+
+.p8b {
+    left: 861px;
+    top: 240px;
+    width: 14px;
+    height: 110px;
+}
+
+
+/* =========================
+   HABITACION 3
+========================= */
+
+.p9 {
+    left: 1050px;
+    top: 50px;
+    width: 300px;
+    height: 14px;
+}
+
+.p10 {
+    left: 1050px;
+    top: 336px;
+    width: 300px;
+    height: 14px;
+}
+
+.p11a {
+    left: 1050px;
+    top: 50px;
+    width: 14px;
+    height: 110px;
+}
+
+.p11b {
+    left: 1050px;
+    top: 240px;
+    width: 14px;
+    height: 110px;
+}
+
+.p12 {
+    left: 1336px;
+    top: 50px;
+    width: 14px;
+    height: 300px;
+}
+
+
+/* =========================
+   HABITACION 4
+========================= */
+
+.p13 {
+    left: 50px;
+    top: 500px;
+    width: 350px;
+    height: 14px;
+}
+
+.p14 {
+    left: 50px;
+    top: 836px;
+    width: 350px;
+    height: 14px;
+}
+
+.p15 {
+    left: 50px;
+    top: 500px;
+    width: 14px;
+    height: 350px;
+}
+
+.p16a {
+    left: 386px;
+    top: 500px;
+    width: 14px;
+    height: 110px;
+}
+
+.p16b {
+    left: 386px;
+    top: 690px;
+    width: 14px;
+    height: 160px;
+}
+
+
+/* =========================
+   HABITACION 5
+========================= */
+
+.p17 {
+    left: 525px;
+    top: 500px;
+    width: 350px;
+    height: 14px;
+}
+
+.p18 {
+    left: 525px;
+    top: 836px;
+    width: 350px;
+    height: 14px;
+}
+
+.p19a {
+    left: 525px;
+    top: 500px;
+    width: 14px;
+    height: 110px;
+}
+
+.p19b {
+    left: 525px;
+    top: 690px;
+    width: 14px;
+    height: 160px;
+}
+
+.p20a {
+    left: 861px;
+    top: 500px;
+    width: 14px;
+    height: 110px;
+}
+
+.p20b {
+    left: 861px;
+    top: 690px;
+    width: 14px;
+    height: 160px;
+}
+
+
+/* =========================
+   HABITACION 6
+========================= */
+
+.p21 {
+    left: 1050px;
+    top: 500px;
+    width: 300px;
+    height: 14px;
+}
+
+.p22 {
+    left: 1050px;
+    top: 836px;
+    width: 300px;
+    height: 14px;
+}
+
+.p23a {
+    left: 1050px;
+    top: 500px;
+    width: 14px;
+    height: 110px;
+}
+
+.p23b {
+    left: 1050px;
+    top: 690px;
+    width: 14px;
+    height: 160px;
+}
+
+.p24 {
+    left: 1336px;
+    top: 500px;
+    width: 14px;
+    height: 350px;
+}
+
+
+/* =========================
+   PUERTAS
+========================= */
+
+.puerta {
+    position: absolute;
+    background: #b8793c;
+    border: 2px solid #633a1d;
+    z-index: 30;
+}
+
+
+/* Puerta horizontal */
+
+.puerta-horizontal {
+    width: 80px;
+    height: 14px;
+}
+
+
+/* Puerta vertical */
+
+.puerta-vertical {
+    width: 14px;
+    height: 80px;
+}
+
+
+/* =========================
+   NOMBRE HABITACION
+========================= */
+
+.nombreHabitacion {
+    position: absolute;
+
+    left: 20px;
+    top: 20px;
+
+    padding: 7px 10px;
+
+    background: rgba(0,0,0,.65);
+
+    border-radius: 6px;
+
+    font-weight: bold;
+
+    z-index: 10;
+}
+
+
+/* =========================
+   DECORACION
+========================= */
+
+.mesa {
+    position: absolute;
+
+    width: 90px;
+    height: 55px;
+
+    background: #75451f;
+
+    border: 5px solid #48260e;
+
+    border-radius: 10px;
+
+    z-index: 5;
+}
+
+
+.alfombra {
+    position: absolute;
+
+    width: 150px;
+    height: 100px;
+
+    background: #914b52;
+
+    border: 5px solid #633238;
+
+    border-radius: 15px;
+
+    z-index: 3;
+}
+
+
+/* =========================
+   PERSONA VISTA DESDE ARRIBA
+========================= */
+
+.jugador {
+    position: absolute;
+
+    width: 50px;
+    height: 65px;
+
+    transform: translate(-50%, -50%);
+
+    z-index: 100;
+
+    pointer-events: none;
+}
+
+
+.cabeza {
+    position: absolute;
+
+    width: 27px;
+    height: 27px;
+
+    left: 50%;
+    top: 0;
+
+    transform: translateX(-50%);
+
+    background: #f1c27d;
+
+    border: 2px solid #222;
+
+    border-radius: 50%;
+
+    z-index: 3;
+}
+
+
+.pelo {
+    position: absolute;
+
+    width: 29px;
+    height: 13px;
+
+    left: 50%;
+    top: -2px;
+
+    transform: translateX(-50%);
+
+    background: #222;
+
+    border-radius: 50% 50% 30% 30%;
+
+    z-index: 4;
+}
+
+
+.cuerpo {
+    position: absolute;
+
+    width: 32px;
+    height: 29px;
+
+    left: 50%;
+    top: 25px;
+
+    transform: translateX(-50%);
+
+    border-radius: 8px;
+
+    border: 2px solid #111;
+}
+
+
+.brazo {
+    position: absolute;
+
+    width: 9px;
+    height: 25px;
+
+    top: 27px;
+
+    background: #f1c27d;
+
+    border: 2px solid #222;
+
+    border-radius: 5px;
+}
+
+
+.brazo-izquierdo {
+    left: 2px;
+}
+
+
+.brazo-derecho {
+    right: 2px;
+}
+
+
+.pierna {
+    position: absolute;
+
+    width: 10px;
+    height: 18px;
+
+    top: 51px;
+
+    background: #222;
+
+    border-radius: 4px;
+}
+
+
+.pierna-izquierda {
+    left: 14px;
+}
+
+
+.pierna-derecha {
+    right: 14px;
+}
+
+
+.jugador1 .cuerpo {
+    background: #3498db;
+}
+
+
+.otroJugador .cuerpo {
+    background: #e74c3c;
+}
+
+
+.nombreJugador {
+    position: absolute;
+
+    top: -25px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    white-space: nowrap;
+
+    padding: 3px 6px;
+
+    background: rgba(0,0,0,.75);
+
+    border-radius: 4px;
+
+    font-size: 11px;
+}
+
+
+/* =========================
+   INFORMACION HABITACION
+========================= */
+
+#habitacionActual {
+    position: fixed;
+
+    right: 20px;
+    bottom: 20px;
+
+    z-index: 1000;
+
+    padding: 10px 15px;
+
+    background: rgba(0,0,0,.85);
+
+    border: 2px solid white;
+
+    border-radius: 8px;
+
+    font-weight: bold;
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<!-- =========================
+     MENU
+========================= -->
+
+<div id="menu">
+
+    <h1>🎮 Juego Online</h1>
+
+    <h2>Crear sala</h2>
+
+    <button id="crearSala">
+        Crear sala
+    </button>
+
+    <hr>
+
+    <h2>Unirse</h2>
+
+    <input
+        id="codigoInput"
+        maxlength="5"
+        placeholder="Código de sala"
+    >
+
+    <button id="unirseSala">
+        Unirse a sala
+    </button>
+
+    <p id="mensaje"></p>
+
+</div>
+
+
+<!-- =========================
+     JUEGO
+========================= -->
+
+<div id="juego">
+
+    <div id="informacion">
+
+        <h2>
+            Sala:
+            <span id="codigoSala"></span>
+        </h2>
+
+        <p>
+            Jugadores:
+            <span id="cantidadJugadores">0</span>
+            /4
+        </p>
+
+        <p>
+            Usá W A S D para moverte
+        </p>
+
+    </div>
+
+
+    <div id="camara">
+
+        <div id="mapa">
+
+
+            <!-- =========================
+                 HABITACION 1
+            ========================= -->
+
+            <div
+                id="habitacion1"
+                class="habitacion"
+            >
+
+                <div class="nombreHabitacion">
+                    🛋️ Sala de estar
+                </div>
+
+                <div
+                    class="mesa"
+                    style="left:100px; top:130px;"
+                ></div>
+
+                <div
+                    class="alfombra"
+                    style="left:170px; top:170px;"
+                ></div>
+
+            </div>
+
+
+            <!-- =========================
+                 HABITACION 2
+            ========================= -->
+
+            <div
+                id="habitacion2"
+                class="habitacion"
+            >
+
+                <div class="nombreHabitacion">
+                    🍳 Cocina
+                </div>
+
+                <div
+                    class="mesa"
+                    style="left:120px; top:130px;"
+                ></div>
+
+            </div>
+
+
+            <!-- =========================
+                 HABITACION 3
+            ========================= -->
+
+            <div
+                id="habitacion3"
+                class="habitacion"
+            >
+
+                <div class="nombreHabitacion">
+                    🛏️ Dormitorio
+                </div>
+
+                <div
+                    class="alfombra"
+                    style="left:70px; top:120px;"
+                ></div>
+
+            </div>
+
+
+            <!-- =========================
+                 HABITACION 4
+            ========================= -->
+
+            <div
+                id="habitacion4"
+                class="habitacion"
+            >
+
+                <div class="nombreHabitacion">
+                    📚 Biblioteca
+                </div>
+
+                <div
+                    class="mesa"
+                    style="left:100px; top:130px;"
+                ></div>
+
+            </div>
+
+
+            <!-- =========================
+                 HABITACION 5
+            ========================= -->
+
+            <div
+                id="habitacion5"
+                class="habitacion"
+            >
+
+                <div class="nombreHabitacion">
+                    ⭐ Sala central
+                </div>
+
+                <div
+                    class="alfombra"
+                    style="left:100px; top:120px;"
+                ></div>
+
+                <div
+                    class="mesa"
+                    style="left:130px; top:145px;"
+                ></div>
+
+            </div>
+
+
+            <!-- =========================
+                 HABITACION 6
+            ========================= -->
+
+            <div
+                id="habitacion6"
+                class="habitacion"
+            >
+
+                <div class="nombreHabitacion">
+                    🎮 Sala de juegos
+                </div>
+
+                <div
+                    class="mesa"
+                    style="left:100px; top:120px;"
+                ></div>
+
+            </div>
+
+
+            <!-- =========================
+                 PASILLOS
+                 SIN PAREDES
+            ========================= -->
+
+            <div class="pasillo pasillo1"></div>
+            <div class="pasillo pasillo2"></div>
+            <div class="pasillo pasillo3"></div>
+            <div class="pasillo pasillo4"></div>
+            <div class="pasillo pasillo5"></div>
+            <div class="pasillo pasillo6"></div>
+            <div class="pasillo pasillo7"></div>
+
+
+            <!-- =========================
+                 PAREDES
+            ========================= -->
+
+            <div class="pared p1"></div>
+            <div class="pared p2"></div>
+            <div class="pared p3"></div>
+            <div class="pared p4a"></div>
+            <div class="pared p4b"></div>
+
+            <div class="pared p5"></div>
+            <div class="pared p6"></div>
+            <div class="pared p7a"></div>
+            <div class="pared p7b"></div>
+            <div class="pared p8a"></div>
+            <div class="pared p8b"></div>
+
+            <div class="pared p9"></div>
+            <div class="pared p10"></div>
+            <div class="pared p11a"></div>
+            <div class="pared p11b"></div>
+            <div class="pared p12"></div>
+
+            <div class="pared p13"></div>
+            <div class="pared p14"></div>
+            <div class="pared p15"></div>
+            <div class="pared p16a"></div>
+            <div class="pared p16b"></div>
+
+            <div class="pared p17"></div>
+            <div class="pared p18"></div>
+            <div class="pared p19a"></div>
+            <div class="pared p19b"></div>
+            <div class="pared p20a"></div>
+            <div class="pared p20b"></div>
+
+            <div class="pared p21"></div>
+            <div class="pared p22"></div>
+            <div class="pared p23a"></div>
+            <div class="pared p23b"></div>
+            <div class="pared p24"></div>
+
+
+            <!-- =========================
+                 PUERTAS
+            ========================= -->
+
+            <!-- Puertas horizontales -->
+
+            <div
+                class="puerta puerta-horizontal"
+                style="left:225px; top:336px;"
+            ></div>
+
+            <div
+                class="puerta puerta-horizontal"
+                style="left:640px; top:336px;"
+            ></div>
+
+            <div
+                class="puerta puerta-horizontal"
+                style="left:1150px; top:336px;"
+            ></div>
+
+
+            <div
+                class="puerta puerta-horizontal"
+                style="left:225px; top:500px;"
+            ></div>
+
+            <div
+                class="puerta puerta-horizontal"
+                style="left:640px; top:500px;"
+            ></div>
+
+            <div
+                class="puerta puerta-horizontal"
+                style="left:1150px; top:500px;"
+            ></div>
+
+
+            <!-- Puertas verticales -->
+
+            <div
+                class="puerta puerta-vertical"
+                style="left:386px; top:175px;"
+            ></div>
+
+            <div
+                class="puerta puerta-vertical"
+                style="left:525px; top:175px;"
+            ></div>
+
+
+            <div
+                class="puerta puerta-vertical"
+                style="left:861px; top:175px;"
+            ></div>
+
+            <div
+                class="puerta puerta-vertical"
+                style="left:1050px; top:175px;"
+            ></div>
+
+
+            <div
+                class="puerta puerta-vertical"
+                style="left:386px; top:625px;"
+            ></div>
+
+            <div
+                class="puerta puerta-vertical"
+                style="left:525px; top:625px;"
+            ></div>
+
+
+            <div
+                class="puerta puerta-vertical"
+                style="left:861px; top:625px;"
+            ></div>
+
+            <div
+                class="puerta puerta-vertical"
+                style="left:1050px; top:625px;"
+            ></div>
+
+
+        </div>
+
+    </div>
+
+
+    <div id="habitacionActual">
+        Pasillo
+    </div>
+
+</div>
+
+
+<script src="/socket.io/socket.io.js"></script>
+
+
+<script>
+
+/* =========================
+   SOCKET
+========================= */
+
+const socket = io();
+
+
+/* =========================
+   ELEMENTOS
+========================= */
+
+const menu =
+    document.getElementById("menu");
+
+const juego =
+    document.getElementById("juego");
+
+const crearSala =
+    document.getElementById("crearSala");
+
+const unirseSala =
+    document.getElementById("unirseSala");
+
+const codigoInput =
+    document.getElementById("codigoInput");
+
+const codigoSala =
+    document.getElementById("codigoSala");
+
+const cantidadJugadores =
+    document.getElementById("cantidadJugadores");
+
+const mapa =
+    document.getElementById("mapa");
+
+const camara =
+    document.getElementById("camara");
+
+const mensaje =
+    document.getElementById("mensaje");
+
+const habitacionActual =
+    document.getElementById("habitacionActual");
+
+
+/* =========================
+   JUGADOR
+========================= */
+
+let miId = null;
+
+let miJugador = {
+    x: 700,
+    y: 450
+};
+
+
+/*
+    Radio de colisión.
+*/
+
+const RADIO_JUGADOR = 18;
+
+
+/* =========================
+   CONEXION
+========================= */
+
+socket.on("connect", () => {
+
+    miId = socket.id;
+
+});
+
+
+/* =========================
+   CREAR SALA
+========================= */
+
+crearSala.addEventListener(
+    "click",
+    () => {
+
+        socket.emit("crearSala");
+
+    }
+);
+
+
+/* =========================
+   UNIRSE
+========================= */
+
+unirseSala.addEventListener(
+    "click",
+    () => {
+
+        const codigo =
+            codigoInput.value
+            .trim()
+            .toUpperCase();
+
+
+        if (codigo === "") {
+
+            mensaje.textContent =
+                "Escribí un código.";
+
+            return;
+        }
+
+
+        socket.emit(
+            "unirseSala",
+            codigo
+        );
+
+    }
+);
+
+
+/* =========================
+   ENTRAR AL JUEGO
+========================= */
+
+socket.on(
+    "salaCreada",
+    datos => {
+
+        entrarAlJuego(datos);
+
+    }
+);
+
+
+socket.on(
+    "salaUnida",
+    datos => {
+
+        entrarAlJuego(datos);
+
+    }
+);
+
+
+function entrarAlJuego(datos) {
+
+    menu.style.display = "none";
+
+    juego.style.display = "block";
+
+
+    if (datos && datos.codigo) {
+
+        codigoSala.textContent =
+            datos.codigo;
+
+    }
+
+
+    if (
+        datos &&
+        datos.jugadores !== undefined
+    ) {
+
+        cantidadJugadores.textContent =
+            datos.jugadores;
+
+    }
+
+
+    actualizarCamara();
+
+}
+
+
+/* =========================
+   ACTUALIZAR JUGADORES
+========================= */
+
+socket.on(
+    "actualizarJugadores",
+    jugadores => {
+
+        cantidadJugadores.textContent =
+            jugadores.length;
+
+        mostrarJugadores(jugadores);
+
+    }
+);
+
+
+/* =========================
+   ERROR
+========================= */
+
+socket.on(
+    "errorSala",
+    texto => {
+
+        mensaje.textContent = texto;
+
+    }
+);
+
+
+/* =========================
+   MOSTRAR JUGADORES
+========================= */
+
+function mostrarJugadores(jugadores) {
+
+    mapa
+        .querySelectorAll(".jugador")
+        .forEach(jugador => {
+            jugador.remove();
+        });
+
+
+    jugadores.forEach(
+        (jugador, indice) => {
+
+            const elemento =
+                document.createElement("div");
+
+
+            elemento.className =
+                "jugador";
+
+
+            if (jugador.id === miId) {
+
+                elemento.classList.add(
+                    "jugador1"
+                );
+
+
+                miJugador.x =
+                    jugador.x;
+
+                miJugador.y =
+                    jugador.y;
+
+            }
+            else {
+
+                elemento.classList.add(
+                    "otroJugador"
+                );
+
+            }
+
+
+            /* Cabeza */
+
+            const cabeza =
+                document.createElement("div");
+
+            cabeza.className =
+                "cabeza";
+
+
+            /* Pelo */
+
+            const pelo =
+                document.createElement("div");
+
+            pelo.className =
+                "pelo";
+
+
+            /* Cuerpo */
+
+            const cuerpo =
+                document.createElement("div");
+
+            cuerpo.className =
+                "cuerpo";
+
+
+            /* Brazos */
+
+            const brazo1 =
+                document.createElement("div");
+
+            brazo1.className =
+                "brazo brazo-izquierdo";
+
+
+            const brazo2 =
+                document.createElement("div");
+
+            brazo2.className =
+                "brazo brazo-derecho";
+
+
+            /* Piernas */
+
+            const pierna1 =
+                document.createElement("div");
+
+            pierna1.className =
+                "pierna pierna-izquierda";
+
+
+            const pierna2 =
+                document.createElement("div");
+
+            pierna2.className =
+                "pierna pierna-derecha";
+
+
+            /* Nombre */
+
+            const nombre =
+                document.createElement("div");
+
+            nombre.className =
+                "nombreJugador";
+
+
+            nombre.textContent =
+                jugador.id === miId
+                    ? "YO"
+                    : "Jugador " +
+                      (indice + 1);
+
+
+            elemento.appendChild(cabeza);
+            elemento.appendChild(pelo);
+            elemento.appendChild(cuerpo);
+
+            elemento.appendChild(brazo1);
+            elemento.appendChild(brazo2);
+
+            elemento.appendChild(pierna1);
+            elemento.appendChild(pierna2);
+
+            elemento.appendChild(nombre);
+
+
+            elemento.style.left =
+                jugador.x + "px";
+
+            elemento.style.top =
+                jugador.y + "px";
+
+
+            mapa.appendChild(elemento);
+
+        }
+    );
+
+}
+
+
+/* =========================
+   TECLADO
+========================= */
+
+const teclas = {};
+
+
+document.addEventListener(
+    "keydown",
+    evento => {
+
+        const tecla =
+            evento.key.toLowerCase();
+
+
+        teclas[tecla] = true;
+
+
+        if (
+            ["w","a","s","d"]
+            .includes(tecla)
+        ) {
+
+            evento.preventDefault();
+
+        }
+
+    }
+);
+
+
+document.addEventListener(
+    "keyup",
+    evento => {
+
+        teclas[
+            evento.key.toLowerCase()
+        ] = false;
+
+    }
+);
+
+
+/* =========================
+   RECTANGULOS
+========================= */
+
+function rect(
+    x,
+    y,
+    ancho,
+    alto
+) {
+
+    return {
+        x,
+        y,
+        ancho,
+        alto
+    };
+
+}
+
+
+/* ==================================================
+   PAREDES
+
+   IMPORTANTE:
+
+   Acá solamente aparecen las paredes.
+
+   NO hay paredes de los pasillos.
+   NO hay zonas transitables.
+   NO hay colisiones invisibles.
+================================================== */
+
+const paredes = [
+
+    /* HABITACION 1 */
+
+    rect(50, 50, 350, 14),
+
+    rect(50, 336, 350, 14),
+
+    rect(50, 50, 14, 300),
+
+    rect(386, 50, 14, 110),
+
+    rect(386, 240, 14, 110),
+
+
+    /* HABITACION 2 */
+
+    rect(525, 50, 350, 14),
+
+    rect(525, 336, 350, 14),
+
+    rect(525, 50, 14, 110),
+
+    rect(525, 240, 14, 110),
+
+    rect(861, 50, 14, 110),
+
+    rect(861, 240, 14, 110),
+
+
+    /* HABITACION 3 */
+
+    rect(1050, 50, 300, 14),
+
+    rect(1050, 336, 300, 14),
+
+    rect(1050, 50, 14, 110),
+
+    rect(1050, 240, 14, 110),
+
+    rect(1336, 50, 14, 300),
+
+
+    /* HABITACION 4 */
+
+    rect(50, 500, 350, 14),
+
+    rect(50, 836, 350, 14),
+
+    rect(50, 500, 14, 350),
+
+    rect(386, 500, 14, 110),
+
+    rect(386, 690, 14, 160),
+
+
+    /* HABITACION 5 */
+
+    rect(525, 500, 350, 14),
+
+    rect(525, 836, 350, 14),
+
+    rect(525, 500, 14, 110),
+
+    rect(525, 690, 14, 160),
+
+    rect(861, 500, 14, 110),
+
+    rect(861, 690, 14, 160),
+
+
+    /* HABITACION 6 */
+
+    rect(1050, 500, 300, 14),
+
+    rect(1050, 836, 300, 14),
+
+    rect(1050, 500, 14, 110),
+
+    rect(1050, 690, 14, 160),
+
+    rect(1336, 500, 14, 350)
+
+];
+
+
+/* =========================
+   COLISION CON PARED
+========================= */
+
+function colisionaConPared(
+    x,
+    y,
+    pared
+) {
+
+    /*
+       Buscamos el punto de la
+       pared más cercano al jugador.
+    */
+
+    const puntoX =
+        Math.max(
+            pared.x,
+            Math.min(
+                x,
+                pared.x + pared.ancho
+            )
+        );
+
+
+    const puntoY =
+        Math.max(
+            pared.y,
+            Math.min(
+                y,
+                pared.y + pared.alto
+            )
+        );
+
+
+    const distanciaX =
+        x - puntoX;
+
+
+    const distanciaY =
+        y - puntoY;
+
+
+    const distancia =
+        Math.sqrt(
+            distanciaX * distanciaX +
+            distanciaY * distanciaY
+        );
+
+
+    return distancia < RADIO_JUGADOR;
+
+}
+
+
+/* =========================
+   ¿TOCA ALGUNA PARED?
+========================= */
+
+function tocaPared(
+    x,
+    y
+) {
+
+    for (
+        const pared of paredes
+    ) {
+
+        if (
+            colisionaConPared(
+                x,
+                y,
+                pared
+            )
+        ) {
+
+            return true;
+
+        }
+
+    }
+
+
+    return false;
+
+}
+
+
+/* =========================
+   MOVIMIENTO
+========================= */
+
+function moverJugador(
+    nuevoX,
+    nuevoY
+) {
+
+    /*
+       Primero intentamos mover
+       en las dos direcciones.
+    */
+
+    if (
+        !tocaPared(
+            nuevoX,
+            nuevoY
+        )
+    ) {
+
+        miJugador.x =
+            nuevoX;
+
+        miJugador.y =
+            nuevoY;
+
+        return;
+
+    }
+
+
+    /*
+       Si choca diagonalmente,
+       intentamos mover solamente
+       en X.
+    */
+
+    if (
+        !tocaPared(
+            nuevoX,
+            miJugador.y
+        )
+    ) {
+
+        miJugador.x =
+            nuevoX;
+
+    }
+
+
+    /*
+       Después intentamos solamente Y.
+    */
+
+    if (
+        !tocaPared(
+            miJugador.x,
+            nuevoY
+        )
+    ) {
+
+        miJugador.y =
+            nuevoY;
+
+    }
+
+}
+
+
+/* =========================
+   MOVIMIENTO PRINCIPAL
+========================= */
+
+function actualizarMovimiento() {
+
+    if (
+        juego.style.display ===
+        "none"
+    ) {
+
+        requestAnimationFrame(
+            actualizarMovimiento
+        );
+
+        return;
+
+    }
+
+
+    const velocidad = 5;
+
+
+    let nuevoX =
+        miJugador.x;
+
+    let nuevoY =
+        miJugador.y;
+
+
+    if (teclas["w"]) {
+        nuevoY -= velocidad;
+    }
+
+    if (teclas["s"]) {
+        nuevoY += velocidad;
+    }
+
+    if (teclas["a"]) {
+        nuevoX -= velocidad;
+    }
+
+    if (teclas["d"]) {
+        nuevoX += velocidad;
+    }
+
+
+    /*
+       Limites exteriores del mapa.
+    */
+
+    nuevoX =
+        Math.max(
+            RADIO_JUGADOR,
+            Math.min(
+                1400 - RADIO_JUGADOR,
+                nuevoX
+            )
+        );
+
+
+    nuevoY =
+        Math.max(
+            RADIO_JUGADOR,
+            Math.min(
+                900 - RADIO_JUGADOR,
+                nuevoY
+            )
+        );
+
+
+    /*
+       Mover solamente si no
+       atraviesa una pared.
+    */
+
+    if (
+        nuevoX !== miJugador.x ||
+        nuevoY !== miJugador.y
+    ) {
+
+        moverJugador(
+            nuevoX,
+            nuevoY
+        );
+
+
+        /*
+           Enviamos al servidor
+           la posición actual.
+        */
+
+        socket.emit(
+            "moverJugador",
+            {
+                x: miJugador.x,
+                y: miJugador.y
+            }
+        );
+
+    }
+
+
+    actualizarCamara();
+
+    actualizarHabitacion();
+
+
+    requestAnimationFrame(
+        actualizarMovimiento
+    );
+
+}
+
+
+/* =========================
+   CAMARA
+========================= */
+
+function actualizarCamara() {
+
+    const habitacion =
+        detectarHabitacion();
+
+
+    /*
+       Zoom solamente dentro
+       de una habitación.
+    */
+
+    const zoom =
+        habitacion
+            ? 1.35
+            : 1;
+
+
+    const centroX =
+        camara.clientWidth / 2;
+
+
+    const centroY =
+        camara.clientHeight / 2;
+
+
+    let izquierda =
+        centroX -
+        miJugador.x * zoom;
+
+
+    let arriba =
+        centroY -
+        miJugador.y * zoom;
+
+
+    const anchoMapa =
+        1400 * zoom;
+
+
+    const altoMapa =
+        900 * zoom;
+
+
+    izquierda =
+        Math.min(
+            0,
+            Math.max(
+                camara.clientWidth -
+                anchoMapa,
+                izquierda
+            )
+        );
+
+
+    arriba =
+        Math.min(
+            0,
+            Math.max(
+                camara.clientHeight -
+                altoMapa,
+                arriba
+            )
+        );
+
+
+    mapa.style.left =
+        izquierda + "px";
+
+
+    mapa.style.top =
+        arriba + "px";
+
+
+    mapa.style.transform =
+        `scale(${zoom})`;
+
+}
+
+
+/* =========================
+   DETECTAR HABITACION
+========================= */
+
+function detectarHabitacion() {
+
+    const x =
+        miJugador.x;
+
+    const y =
+        miJugador.y;
+
+
+    if (
+        x >= 64 &&
+        x <= 386 &&
+        y >= 64 &&
+        y <= 336
+    ) {
+
+        return "Sala de estar";
+
+    }
+
+
+    if (
+        x >= 539 &&
+        x <= 861 &&
+        y >= 64 &&
+        y <= 336
+    ) {
+
+        return "Cocina";
+
+    }
+
+
+    if (
+        x >= 1064 &&
+        x <= 1336 &&
+        y >= 64 &&
+        y <= 336
+    ) {
+
+        return "Dormitorio";
+
+    }
+
+
+    if (
+        x >= 64 &&
+        x <= 386 &&
+        y >= 514 &&
+        y <= 836
+    ) {
+
+        return "Biblioteca";
+
+    }
+
+
+    if (
+        x >= 539 &&
+        x <= 861 &&
+        y >= 514 &&
+        y <= 836
+    ) {
+
+        return "Sala central";
+
+    }
+
+
+    if (
+        x >= 1064 &&
+        x <= 1336 &&
+        y >= 514 &&
+        y <= 836
+    ) {
+
+        return "Sala de juegos";
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =========================
+   ACTUALIZAR HABITACION
+========================= */
+
+function actualizarHabitacion() {
+
+    const habitacion =
+        detectarHabitacion();
+
+
+    if (habitacion) {
+
+        habitacionActual.textContent =
+            "Habitación: " +
+            habitacion;
+
+    }
+    else {
+
+        habitacionActual.textContent =
+            "Pasillo";
+
+    }
+
+}
+
+
+/* =========================
+   INICIAR
+========================= */
+
+actualizarMovimiento();
+
+</script>
+
+</body>
+</html>
