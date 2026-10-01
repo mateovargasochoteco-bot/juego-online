@@ -1269,6 +1269,10 @@ let miJugador = {
     y: 450
 };
 
+// La posición local es controlada por este navegador.
+// El servidor solamente la inicializa una vez.
+let posicionInicialRecibida = false;
+
 
 /*
     Radio de colisión.
@@ -1360,6 +1364,10 @@ socket.on(
 
 function entrarAlJuego(datos) {
 
+    // Al entrar a una sala nueva permitimos que el servidor
+    // entregue la posición inicial una sola vez.
+    posicionInicialRecibida = false;
+
     menu.style.display = "none";
 
     juego.style.display = "block";
@@ -1450,12 +1458,16 @@ function mostrarJugadores(jugadores) {
                     "jugador1"
                 );
 
+                // Tomamos la posición del servidor solamente
+                // la primera vez. Después el movimiento local
+                // no debe ser sobrescrito por los mensajes de red.
+                if (!posicionInicialRecibida) {
 
-                miJugador.x =
-                    jugador.x;
+                    miJugador.x = jugador.x;
+                    miJugador.y = jugador.y;
 
-                miJugador.y =
-                    jugador.y;
+                    posicionInicialRecibida = true;
+                }
 
             }
             else {
@@ -1574,9 +1586,18 @@ function mostrarJugadores(jugadores) {
    TECLADO
 ========================= */
 
-const teclas = {};
+const teclas = Object.create(null);
+
+const teclasMovimiento = new Set([
+    "w",
+    "a",
+    "s",
+    "d"
+]);
 
 
+// Cuando se presiona una tecla solamente la marcamos.
+// NO movemos al jugador desde keydown.
 document.addEventListener(
     "keydown",
     evento => {
@@ -1584,30 +1605,42 @@ document.addEventListener(
         const tecla =
             evento.key.toLowerCase();
 
-
-        teclas[tecla] = true;
-
-
-        if (
-            ["w","a","s","d"]
-            .includes(tecla)
-        ) {
-
+        if (teclasMovimiento.has(tecla)) {
             evento.preventDefault();
-
+            teclas[tecla] = true;
         }
 
     }
 );
 
 
+// Cuando se suelta la tecla la liberamos.
 document.addEventListener(
     "keyup",
     evento => {
 
-        teclas[
-            evento.key.toLowerCase()
-        ] = false;
+        const tecla =
+            evento.key.toLowerCase();
+
+        if (teclasMovimiento.has(tecla)) {
+            evento.preventDefault();
+            teclas[tecla] = false;
+        }
+
+    }
+);
+
+
+// Si la ventana pierde el foco,
+// liberamos todas las teclas para evitar
+// que una tecla quede "pegada".
+window.addEventListener(
+    "blur",
+    () => {
+
+        for (const tecla of teclasMovimiento) {
+            teclas[tecla] = false;
+        }
 
     }
 );
@@ -1920,19 +1953,27 @@ function actualizarMovimiento() {
         miJugador.y;
 
 
-    if (teclas["w"]) {
+    // Cada dirección se calcula una sola vez por frame.
+    // Si se mantienen dos teclas opuestas, se anulan entre sí.
+    const arriba = teclas["w"] === true;
+    const abajo = teclas["s"] === true;
+    const izquierda = teclas["a"] === true;
+    const derecha = teclas["d"] === true;
+
+
+    if (arriba && !abajo) {
         nuevoY -= velocidad;
     }
 
-    if (teclas["s"]) {
+    if (abajo && !arriba) {
         nuevoY += velocidad;
     }
 
-    if (teclas["a"]) {
+    if (izquierda && !derecha) {
         nuevoX -= velocidad;
     }
 
-    if (teclas["d"]) {
+    if (derecha && !izquierda) {
         nuevoX += velocidad;
     }
 
