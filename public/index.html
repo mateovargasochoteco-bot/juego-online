@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Juego Online</title>
+<title>Escondite Online</title>
 
 <style>
 
@@ -848,6 +848,103 @@ button:hover {
     font-weight: bold;
 }
 
+
+/* =========================
+   ESCONDITE
+========================= */
+
+#hudEscondite {
+    position: fixed;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3000;
+    min-width: 330px;
+    max-width: calc(100vw - 30px);
+    padding: 12px 18px;
+    text-align: center;
+    background: rgba(0,0,0,.9);
+    border: 2px solid #fff;
+    border-radius: 12px;
+    box-shadow: 0 0 18px rgba(0,0,0,.65);
+    pointer-events: none;
+}
+
+#fasePartida {
+    font-size: 22px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+#temporizadorPartida {
+    margin-top: 4px;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+#rolPartida {
+    margin-top: 3px;
+    font-size: 14px;
+}
+
+#mensajePartida {
+    margin-top: 5px;
+    font-size: 13px;
+}
+
+#overlayPartida {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.78);
+}
+
+#panelResultado {
+    width: min(460px, calc(100vw - 30px));
+    padding: 30px;
+    text-align: center;
+    background: #111;
+    border: 3px solid white;
+    border-radius: 18px;
+    box-shadow: 0 0 30px rgba(0,0,0,.8);
+}
+
+#panelResultado h2 {
+    margin: 0 0 12px;
+    font-size: 32px;
+}
+
+#panelResultado p {
+    margin: 8px 0 20px;
+    font-size: 17px;
+}
+
+#volverMenu {
+    padding: 12px 22px;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.jugador.escondido {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.jugador.atrapado {
+    filter: grayscale(1);
+    opacity: .65;
+}
+
+#musicaPartida {
+    display: none;
+}
+
 </style>
 </head>
 
@@ -893,6 +990,24 @@ button:hover {
 ========================= -->
 
 <div id="juego">
+
+    <div id="hudEscondite">
+        <div id="fasePartida">ESPERANDO JUGADORES</div>
+        <div id="temporizadorPartida">--</div>
+        <div id="rolPartida">Esperando que comience la partida...</div>
+        <div id="mensajePartida"></div>
+    </div>
+
+    <audio id="musicaPartida" loop preload="auto"></audio>
+
+    <div id="overlayPartida">
+        <div id="panelResultado">
+            <h2 id="tituloResultado">Fin de la partida</h2>
+            <p id="textoResultado"></p>
+            <button id="volverMenu" type="button">VOLVER AL MENÚ</button>
+        </div>
+    </div>
+
 
     <div id="informacion">
 
@@ -1208,1050 +1323,670 @@ button:hover {
 </div>
 
 
+
 <script src="/socket.io/socket.io.js"></script>
 
-
 <script>
-
-/* =========================
-   SOCKET
-========================= */
+/* =========================================================
+   ESCONDITE ONLINE
+========================================================= */
 
 const socket = io();
-
 
 /* =========================
    ELEMENTOS
 ========================= */
 
-const menu =
-    document.getElementById("menu");
+const menu = document.getElementById("menu");
+const juego = document.getElementById("juego");
+const crearSala = document.getElementById("crearSala");
+const unirseSala = document.getElementById("unirseSala");
+const codigoInput = document.getElementById("codigoInput");
+const codigoSala = document.getElementById("codigoSala");
+const cantidadJugadores = document.getElementById("cantidadJugadores");
+const mapa = document.getElementById("mapa");
+const camara = document.getElementById("camara");
+const mensaje = document.getElementById("mensaje");
+const habitacionActual = document.getElementById("habitacionActual");
 
-const juego =
-    document.getElementById("juego");
-
-const crearSala =
-    document.getElementById("crearSala");
-
-const unirseSala =
-    document.getElementById("unirseSala");
-
-const codigoInput =
-    document.getElementById("codigoInput");
-
-const codigoSala =
-    document.getElementById("codigoSala");
-
-const cantidadJugadores =
-    document.getElementById("cantidadJugadores");
-
-const mapa =
-    document.getElementById("mapa");
-
-const camara =
-    document.getElementById("camara");
-
-const mensaje =
-    document.getElementById("mensaje");
-
-const habitacionActual =
-    document.getElementById("habitacionActual");
-
+const fasePartida = document.getElementById("fasePartida");
+const temporizadorPartida = document.getElementById("temporizadorPartida");
+const rolPartida = document.getElementById("rolPartida");
+const mensajePartida = document.getElementById("mensajePartida");
+const overlayPartida = document.getElementById("overlayPartida");
+const tituloResultado = document.getElementById("tituloResultado");
+const textoResultado = document.getElementById("textoResultado");
+const volverMenu = document.getElementById("volverMenu");
+const musicaPartida = document.getElementById("musicaPartida");
 
 /* =========================
-   JUGADOR
+   JUGADOR LOCAL
 ========================= */
 
 let miId = null;
+let posicionInicialRecibida = false;
 
 let miJugador = {
     x: 700,
     y: 450
 };
 
-// La posición local es controlada por este navegador.
-// El servidor solamente la inicializa una vez.
-let posicionInicialRecibida = false;
-
-
-/*
-    Radio de colisión.
-*/
+let jugadoresActuales = [];
+let miRol = "esperando";
+let faseActual = "esperando";
+let partidaTerminada = false;
 
 const RADIO_JUGADOR = 18;
+const teclas = Object.create(null);
+const teclasMovimiento = new Set(["w", "a", "s", "d"]);
 
+const elementosJugadores = new Map();
+
+/* Música: nombres de archivos que vos colocás en public/img/ */
+const canciones = [
+    "/img/gd1.mp3",
+    "/img/gd2.mp3",
+    "/img/gd3.mp3",
+    "/img/gd4.mp3"
+];
+
+let indiceCancionActual = -1;
 
 /* =========================
-   CONEXION
+   CONEXIÓN
 ========================= */
 
 socket.on("connect", () => {
-
     miId = socket.id;
-
 });
 
-
 /* =========================
-   CREAR SALA
+   CREAR / UNIRSE
 ========================= */
 
-crearSala.addEventListener(
-    "click",
-    () => {
+crearSala.addEventListener("click", () => {
+    socket.emit("crearSala");
+});
 
-        socket.emit("crearSala");
+unirseSala.addEventListener("click", () => {
+    const codigo = codigoInput.value.trim().toUpperCase();
 
+    if (codigo === "") {
+        mensaje.textContent = "Escribí un código.";
+        return;
     }
-);
 
+    socket.emit("unirseSala", codigo);
+});
+
+codigoInput.addEventListener("keydown", evento => {
+    if (evento.key === "Enter") {
+        unirseSala.click();
+    }
+});
 
 /* =========================
-   UNIRSE
+   ENTRAR
 ========================= */
 
-unirseSala.addEventListener(
-    "click",
-    () => {
+socket.on("salaCreada", datos => {
+    entrarAlJuego(datos);
+});
 
-        const codigo =
-            codigoInput.value
-            .trim()
-            .toUpperCase();
-
-
-        if (codigo === "") {
-
-            mensaje.textContent =
-                "Escribí un código.";
-
-            return;
-        }
-
-
-        socket.emit(
-            "unirseSala",
-            codigo
-        );
-
-    }
-);
-
-
-/* =========================
-   ENTRAR AL JUEGO
-========================= */
-
-socket.on(
-    "salaCreada",
-    datos => {
-
-        entrarAlJuego(datos);
-
-    }
-);
-
-
-socket.on(
-    "salaUnida",
-    datos => {
-
-        entrarAlJuego(datos);
-
-    }
-);
-
+socket.on("salaUnida", datos => {
+    entrarAlJuego(datos);
+});
 
 function entrarAlJuego(datos) {
-
-    // Al entrar a una sala nueva permitimos que el servidor
-    // entregue la posición inicial una sola vez.
-    posicionInicialRecibida = false;
-
     menu.style.display = "none";
-
     juego.style.display = "block";
 
+    posicionInicialRecibida = false;
+    partidaTerminada = false;
+
+    overlayPartida.style.display = "none";
 
     if (datos && datos.codigo) {
-
-        codigoSala.textContent =
-            datos.codigo;
-
+        codigoSala.textContent = datos.codigo;
     }
 
-
-    if (
-        datos &&
-        datos.jugadores !== undefined
-    ) {
-
-        cantidadJugadores.textContent =
-            datos.jugadores;
-
+    if (datos && datos.jugadores !== undefined) {
+        cantidadJugadores.textContent = datos.jugadores;
     }
-
 
     actualizarCamara();
-
 }
 
-
 /* =========================
-   ACTUALIZAR JUGADORES
+   ESTADO DE PARTIDA
 ========================= */
 
-socket.on(
-    "actualizarJugadores",
-    jugadores => {
+socket.on("estadoPartida", estado => {
+    if (!estado) return;
 
-        cantidadJugadores.textContent =
-            jugadores.length;
+    faseActual = estado.fase || "esperando";
+    miRol = estado.miRol || "esperando";
 
-        mostrarJugadores(jugadores);
-
+    if (estado.jugadores !== undefined) {
+        cantidadJugadores.textContent = estado.jugadores;
     }
-);
 
+    actualizarHUD(estado);
+
+    if (estado.fase === "fin") {
+        mostrarResultado(estado);
+    }
+});
+
+function actualizarHUD(estado) {
+    const tiempo = Number.isFinite(estado.tiempo)
+        ? Math.max(0, Math.ceil(estado.tiempo))
+        : 0;
+
+    temporizadorPartida.textContent =
+        estado.fase === "esperando" ? "--" : tiempo;
+
+    if (estado.fase === "cuenta") {
+        fasePartida.textContent = "EL BUSCADOR CUENTA";
+
+        rolPartida.textContent =
+            miRol === "buscador"
+                ? "Sos el BUSCADOR. No podés moverte todavía."
+                : "Sos ESCONDIDO. ¡Buscá un lugar para esconderte!";
+
+        mensajePartida.textContent =
+            "El buscador está contando...";
+    }
+    else if (estado.fase === "busqueda") {
+        fasePartida.textContent = "¡A BUSCAR!";
+
+        rolPartida.textContent =
+            miRol === "buscador"
+                ? "Sos el BUSCADOR. Encontrá a los demás."
+                : "Sos ESCONDIDO. ¡No dejes que te encuentren!";
+
+        mensajePartida.textContent =
+            "El buscador tiene una vista más reducida.";
+    }
+    else if (estado.fase === "fin") {
+        fasePartida.textContent = "PARTIDA TERMINADA";
+    }
+    else {
+        fasePartida.textContent = "ESPERANDO JUGADORES";
+        rolPartida.textContent = "Se necesitan al menos 2 jugadores.";
+        mensajePartida.textContent = "";
+    }
+
+    actualizarCamara();
+}
+
+/* =========================
+   MÚSICA
+========================= */
+
+socket.on("musicaPartida", datos => {
+    if (!datos || !Number.isInteger(datos.indice)) return;
+
+    const indice = datos.indice % canciones.length;
+
+    if (indice === indiceCancionActual) return;
+
+    indiceCancionActual = indice;
+    musicaPartida.src = canciones[indice];
+
+    musicaPartida.currentTime = 0;
+
+    const promesa = musicaPartida.play();
+
+    if (promesa && typeof promesa.catch === "function") {
+        promesa.catch(() => {
+            // Algunos navegadores bloquean el audio si no hubo interacción.
+        });
+    }
+});
+
+function detenerMusica() {
+    musicaPartida.pause();
+    musicaPartida.currentTime = 0;
+}
+
+/* =========================
+   JUGADORES
+========================= */
+
+socket.on("actualizarJugadores", jugadores => {
+    jugadoresActuales = Array.isArray(jugadores) ? jugadores : [];
+
+    cantidadJugadores.textContent = jugadoresActuales.length;
+
+    actualizarJugadoresDOM();
+});
+
+function actualizarJugadoresDOM() {
+    const idsVisibles = new Set();
+
+    jugadoresActuales.forEach((jugador, indice) => {
+        idsVisibles.add(jugador.id);
+
+        let elemento = elementosJugadores.get(jugador.id);
+
+        if (!elemento) {
+            elemento = crearElementoJugador(jugador, indice);
+            elementosJugadores.set(jugador.id, elemento);
+            mapa.appendChild(elemento);
+        }
+
+        const esYo = jugador.id === miId;
+
+        if (esYo && !posicionInicialRecibida) {
+            miJugador.x = jugador.x;
+            miJugador.y = jugador.y;
+            posicionInicialRecibida = true;
+        }
+
+        elemento.classList.toggle("jugador1", esYo);
+        elemento.classList.toggle("otroJugador", !esYo);
+        elemento.classList.toggle("escondido", jugador.visible === false);
+        elemento.classList.toggle("atrapado", jugador.atrapado === true);
+
+        const nombre = elemento.querySelector(".nombreJugador");
+
+        if (nombre) {
+            nombre.textContent = esYo
+                ? "YO"
+                : (jugador.rol === "buscador"
+                    ? "BUSCADOR"
+                    : "Jugador " + (indice + 1));
+        }
+
+        if (!esYo) {
+            elemento.style.left = jugador.x + "px";
+            elemento.style.top = jugador.y + "px";
+        }
+    });
+
+    for (const [id, elemento] of elementosJugadores.entries()) {
+        if (!idsVisibles.has(id)) {
+            elemento.remove();
+            elementosJugadores.delete(id);
+        }
+    }
+
+    renderizarJugadorLocal();
+}
+
+function crearElementoJugador(jugador, indice) {
+    const elemento = document.createElement("div");
+    elemento.className = "jugador";
+
+    const cabeza = document.createElement("div");
+    cabeza.className = "cabeza";
+
+    const pelo = document.createElement("div");
+    pelo.className = "pelo";
+
+    const cuerpo = document.createElement("div");
+    cuerpo.className = "cuerpo";
+
+    const brazo1 = document.createElement("div");
+    brazo1.className = "brazo brazo-izquierdo";
+
+    const brazo2 = document.createElement("div");
+    brazo2.className = "brazo brazo-derecho";
+
+    const pierna1 = document.createElement("div");
+    pierna1.className = "pierna pierna-izquierda";
+
+    const pierna2 = document.createElement("div");
+    pierna2.className = "pierna pierna-derecha";
+
+    const nombre = document.createElement("div");
+    nombre.className = "nombreJugador";
+
+    nombre.textContent =
+        jugador.id === miId
+            ? "YO"
+            : "Jugador " + (indice + 1);
+
+    elemento.append(
+        cabeza,
+        pelo,
+        cuerpo,
+        brazo1,
+        brazo2,
+        pierna1,
+        pierna2,
+        nombre
+    );
+
+    elemento.style.left = jugador.x + "px";
+    elemento.style.top = jugador.y + "px";
+
+    return elemento;
+}
+
+function renderizarJugadorLocal() {
+    const elemento = elementosJugadores.get(miId);
+
+    if (!elemento) return;
+
+    elemento.style.left = miJugador.x + "px";
+    elemento.style.top = miJugador.y + "px";
+}
 
 /* =========================
    ERROR
 ========================= */
 
-socket.on(
-    "errorSala",
-    texto => {
-
-        mensaje.textContent = texto;
-
-    }
-);
-
-
-/* =========================
-   MOSTRAR JUGADORES
-========================= */
-
-function mostrarJugadores(jugadores) {
-
-    mapa
-        .querySelectorAll(".jugador")
-        .forEach(jugador => {
-            jugador.remove();
-        });
-
-
-    jugadores.forEach(
-        (jugador, indice) => {
-
-            const elemento =
-                document.createElement("div");
-
-
-            elemento.className =
-                "jugador";
-
-
-            if (jugador.id === miId) {
-
-                elemento.classList.add(
-                    "jugador1"
-                );
-
-                // Tomamos la posición del servidor solamente
-                // la primera vez. Después el movimiento local
-                // no debe ser sobrescrito por los mensajes de red.
-                if (!posicionInicialRecibida) {
-
-                    miJugador.x = jugador.x;
-                    miJugador.y = jugador.y;
-
-                    posicionInicialRecibida = true;
-                }
-
-            }
-            else {
-
-                elemento.classList.add(
-                    "otroJugador"
-                );
-
-            }
-
-
-            /* Cabeza */
-
-            const cabeza =
-                document.createElement("div");
-
-            cabeza.className =
-                "cabeza";
-
-
-            /* Pelo */
-
-            const pelo =
-                document.createElement("div");
-
-            pelo.className =
-                "pelo";
-
-
-            /* Cuerpo */
-
-            const cuerpo =
-                document.createElement("div");
-
-            cuerpo.className =
-                "cuerpo";
-
-
-            /* Brazos */
-
-            const brazo1 =
-                document.createElement("div");
-
-            brazo1.className =
-                "brazo brazo-izquierdo";
-
-
-            const brazo2 =
-                document.createElement("div");
-
-            brazo2.className =
-                "brazo brazo-derecho";
-
-
-            /* Piernas */
-
-            const pierna1 =
-                document.createElement("div");
-
-            pierna1.className =
-                "pierna pierna-izquierda";
-
-
-            const pierna2 =
-                document.createElement("div");
-
-            pierna2.className =
-                "pierna pierna-derecha";
-
-
-            /* Nombre */
-
-            const nombre =
-                document.createElement("div");
-
-            nombre.className =
-                "nombreJugador";
-
-
-            nombre.textContent =
-                jugador.id === miId
-                    ? "YO"
-                    : "Jugador " +
-                      (indice + 1);
-
-
-            elemento.appendChild(cabeza);
-            elemento.appendChild(pelo);
-            elemento.appendChild(cuerpo);
-
-            elemento.appendChild(brazo1);
-            elemento.appendChild(brazo2);
-
-            elemento.appendChild(pierna1);
-            elemento.appendChild(pierna2);
-
-            elemento.appendChild(nombre);
-
-
-            elemento.style.left =
-                jugador.x + "px";
-
-            elemento.style.top =
-                jugador.y + "px";
-
-
-            mapa.appendChild(elemento);
-
-        }
-    );
-
-}
-
+socket.on("errorSala", texto => {
+    mensaje.textContent = texto;
+});
 
 /* =========================
    TECLADO
 ========================= */
 
-const teclas = Object.create(null);
+document.addEventListener("keydown", evento => {
+    const tecla = evento.key.toLowerCase();
 
-const teclasMovimiento = new Set([
-    "w",
-    "a",
-    "s",
-    "d"
-]);
-
-
-// Cuando se presiona una tecla solamente la marcamos.
-// NO movemos al jugador desde keydown.
-document.addEventListener(
-    "keydown",
-    evento => {
-
-        const tecla =
-            evento.key.toLowerCase();
-
-        if (teclasMovimiento.has(tecla)) {
-            evento.preventDefault();
-            teclas[tecla] = true;
-        }
-
+    if (teclasMovimiento.has(tecla)) {
+        evento.preventDefault();
+        teclas[tecla] = true;
     }
-);
+});
 
+document.addEventListener("keyup", evento => {
+    const tecla = evento.key.toLowerCase();
 
-// Cuando se suelta la tecla la liberamos.
-document.addEventListener(
-    "keyup",
-    evento => {
-
-        const tecla =
-            evento.key.toLowerCase();
-
-        if (teclasMovimiento.has(tecla)) {
-            evento.preventDefault();
-            teclas[tecla] = false;
-        }
-
+    if (teclasMovimiento.has(tecla)) {
+        evento.preventDefault();
+        teclas[tecla] = false;
     }
-);
+});
 
-
-// Si la ventana pierde el foco,
-// liberamos todas las teclas para evitar
-// que una tecla quede "pegada".
-window.addEventListener(
-    "blur",
-    () => {
-
-        for (const tecla of teclasMovimiento) {
-            teclas[tecla] = false;
-        }
-
+window.addEventListener("blur", () => {
+    for (const tecla of teclasMovimiento) {
+        teclas[tecla] = false;
     }
-);
-
+});
 
 /* =========================
-   RECTANGULOS
+   RECTÁNGULOS
 ========================= */
 
-function rect(
-    x,
-    y,
-    ancho,
-    alto
-) {
-
-    return {
-        x,
-        y,
-        ancho,
-        alto
-    };
-
+function rect(x, y, ancho, alto) {
+    return { x, y, ancho, alto };
 }
 
-
-/* ==================================================
+/* =========================
    PAREDES
-
-   IMPORTANTE:
-
-   Acá solamente aparecen las paredes.
-
-   NO hay paredes de los pasillos.
-   NO hay zonas transitables.
-   NO hay colisiones invisibles.
-================================================== */
+   Solamente las paredes bloquean.
+   Los pasillos y las puertas siguen
+   siendo transitables.
+========================= */
 
 const paredes = [
-
-    /* HABITACION 1 */
-
     rect(50, 50, 350, 14),
-
     rect(50, 336, 350, 14),
-
     rect(50, 50, 14, 300),
-
     rect(386, 50, 14, 110),
-
     rect(386, 240, 14, 110),
 
-
-    /* HABITACION 2 */
-
     rect(525, 50, 350, 14),
-
     rect(525, 336, 350, 14),
-
     rect(525, 50, 14, 110),
-
     rect(525, 240, 14, 110),
-
     rect(861, 50, 14, 110),
-
     rect(861, 240, 14, 110),
 
-
-    /* HABITACION 3 */
-
     rect(1050, 50, 300, 14),
-
     rect(1050, 336, 300, 14),
-
     rect(1050, 50, 14, 110),
-
     rect(1050, 240, 14, 110),
-
     rect(1336, 50, 14, 300),
 
-
-    /* HABITACION 4 */
-
     rect(50, 500, 350, 14),
-
     rect(50, 836, 350, 14),
-
     rect(50, 500, 14, 350),
-
     rect(386, 500, 14, 110),
-
     rect(386, 690, 14, 160),
 
-
-    /* HABITACION 5 */
-
     rect(525, 500, 350, 14),
-
     rect(525, 836, 350, 14),
-
     rect(525, 500, 14, 110),
-
     rect(525, 690, 14, 160),
-
     rect(861, 500, 14, 110),
-
     rect(861, 690, 14, 160),
 
-
-    /* HABITACION 6 */
-
     rect(1050, 500, 300, 14),
-
     rect(1050, 836, 300, 14),
-
     rect(1050, 500, 14, 110),
-
     rect(1050, 690, 14, 160),
-
     rect(1336, 500, 14, 350)
-
 ];
 
+function colisionaConPared(x, y, pared) {
+    const puntoX = Math.max(
+        pared.x,
+        Math.min(x, pared.x + pared.ancho)
+    );
 
-/* =========================
-   COLISION CON PARED
-========================= */
+    const puntoY = Math.max(
+        pared.y,
+        Math.min(y, pared.y + pared.alto)
+    );
 
-function colisionaConPared(
-    x,
-    y,
-    pared
-) {
+    const distanciaX = x - puntoX;
+    const distanciaY = y - puntoY;
 
-    /*
-       Buscamos el punto de la
-       pared más cercano al jugador.
-    */
-
-    const puntoX =
-        Math.max(
-            pared.x,
-            Math.min(
-                x,
-                pared.x + pared.ancho
-            )
-        );
-
-
-    const puntoY =
-        Math.max(
-            pared.y,
-            Math.min(
-                y,
-                pared.y + pared.alto
-            )
-        );
-
-
-    const distanciaX =
-        x - puntoX;
-
-
-    const distanciaY =
-        y - puntoY;
-
-
-    const distancia =
-        Math.sqrt(
-            distanciaX * distanciaX +
-            distanciaY * distanciaY
-        );
-
-
-    return distancia < RADIO_JUGADOR;
-
+    return Math.sqrt(
+        distanciaX * distanciaX +
+        distanciaY * distanciaY
+    ) < RADIO_JUGADOR;
 }
 
-
-/* =========================
-   ¿TOCA ALGUNA PARED?
-========================= */
-
-function tocaPared(
-    x,
-    y
-) {
-
-    for (
-        const pared of paredes
-    ) {
-
-        if (
-            colisionaConPared(
-                x,
-                y,
-                pared
-            )
-        ) {
-
-            return true;
-
-        }
-
-    }
-
-
-    return false;
-
+function tocaPared(x, y) {
+    return paredes.some(pared =>
+        colisionaConPared(x, y, pared)
+    );
 }
-
 
 /* =========================
    MOVIMIENTO
 ========================= */
 
-function moverJugador(
-    nuevoX,
-    nuevoY
-) {
-
-    /*
-       Primero intentamos mover
-       en las dos direcciones.
-    */
-
-    if (
-        !tocaPared(
-            nuevoX,
-            nuevoY
-        )
-    ) {
-
-        miJugador.x =
-            nuevoX;
-
-        miJugador.y =
-            nuevoY;
-
+function moverJugador(nuevoX, nuevoY) {
+    if (!tocaPared(nuevoX, nuevoY)) {
+        miJugador.x = nuevoX;
+        miJugador.y = nuevoY;
         return;
-
     }
 
-
-    /*
-       Si choca diagonalmente,
-       intentamos mover solamente
-       en X.
-    */
-
-    if (
-        !tocaPared(
-            nuevoX,
-            miJugador.y
-        )
-    ) {
-
-        miJugador.x =
-            nuevoX;
-
+    if (!tocaPared(nuevoX, miJugador.y)) {
+        miJugador.x = nuevoX;
     }
 
-
-    /*
-       Después intentamos solamente Y.
-    */
-
-    if (
-        !tocaPared(
-            miJugador.x,
-            nuevoY
-        )
-    ) {
-
-        miJugador.y =
-            nuevoY;
-
+    if (!tocaPared(miJugador.x, nuevoY)) {
+        miJugador.y = nuevoY;
     }
-
 }
 
-
-/* =========================
-   MOVIMIENTO PRINCIPAL
-========================= */
-
 function actualizarMovimiento() {
-
-    if (
-        juego.style.display ===
-        "none"
-    ) {
-
-        requestAnimationFrame(
-            actualizarMovimiento
-        );
-
+    if (juego.style.display === "none") {
+        requestAnimationFrame(actualizarMovimiento);
         return;
-
     }
-
 
     const velocidad = 5;
 
+    /* Durante la cuenta el buscador está quieto. */
+    const puedeMoverse =
+        faseActual === "busqueda" ||
+        (faseActual === "cuenta" && miRol !== "buscador");
 
-    let nuevoX =
-        miJugador.x;
+    if (puedeMoverse && !partidaTerminada) {
+        let nuevoX = miJugador.x;
+        let nuevoY = miJugador.y;
 
-    let nuevoY =
-        miJugador.y;
+        const arriba = teclas["w"] === true;
+        const abajo = teclas["s"] === true;
+        const izquierda = teclas["a"] === true;
+        const derecha = teclas["d"] === true;
 
+        if (arriba && !abajo) nuevoY -= velocidad;
+        if (abajo && !arriba) nuevoY += velocidad;
+        if (izquierda && !derecha) nuevoX -= velocidad;
+        if (derecha && !izquierda) nuevoX += velocidad;
 
-    // Cada dirección se calcula una sola vez por frame.
-    // Si se mantienen dos teclas opuestas, se anulan entre sí.
-    const arriba = teclas["w"] === true;
-    const abajo = teclas["s"] === true;
-    const izquierda = teclas["a"] === true;
-    const derecha = teclas["d"] === true;
-
-
-    if (arriba && !abajo) {
-        nuevoY -= velocidad;
-    }
-
-    if (abajo && !arriba) {
-        nuevoY += velocidad;
-    }
-
-    if (izquierda && !derecha) {
-        nuevoX -= velocidad;
-    }
-
-    if (derecha && !izquierda) {
-        nuevoX += velocidad;
-    }
-
-
-    /*
-       Limites exteriores del mapa.
-    */
-
-    nuevoX =
-        Math.max(
+        nuevoX = Math.max(
             RADIO_JUGADOR,
-            Math.min(
-                1400 - RADIO_JUGADOR,
-                nuevoX
-            )
+            Math.min(1400 - RADIO_JUGADOR, nuevoX)
         );
 
-
-    nuevoY =
-        Math.max(
+        nuevoY = Math.max(
             RADIO_JUGADOR,
-            Math.min(
-                900 - RADIO_JUGADOR,
-                nuevoY
-            )
+            Math.min(900 - RADIO_JUGADOR, nuevoY)
         );
 
+        if (
+            nuevoX !== miJugador.x ||
+            nuevoY !== miJugador.y
+        ) {
+            moverJugador(nuevoX, nuevoY);
 
-    /*
-       Mover solamente si no
-       atraviesa una pared.
-    */
-
-    if (
-        nuevoX !== miJugador.x ||
-        nuevoY !== miJugador.y
-    ) {
-
-        moverJugador(
-            nuevoX,
-            nuevoY
-        );
-
-
-        /*
-           Enviamos al servidor
-           la posición actual.
-        */
-
-        socket.emit(
-            "moverJugador",
-            {
+            socket.emit("moverJugador", {
                 x: miJugador.x,
                 y: miJugador.y
-            }
-        );
-
+            });
+        }
     }
 
-
+    renderizarJugadorLocal();
     actualizarCamara();
-
     actualizarHabitacion();
 
-
-    requestAnimationFrame(
-        actualizarMovimiento
-    );
-
+    requestAnimationFrame(actualizarMovimiento);
 }
 
-
 /* =========================
-   CAMARA
+   CÁMARA
 ========================= */
 
 function actualizarCamara() {
+    const habitacion = detectarHabitacion();
 
-    const habitacion =
-        detectarHabitacion();
-
+    let zoom = habitacion ? 1.35 : 1;
 
     /*
-       Zoom solamente dentro
-       de una habitación.
+       El buscador tiene una vista más reducida
+       durante la búsqueda.
     */
+    if (miRol === "buscador" && faseActual === "busqueda") {
+        zoom = 2.0;
+    }
 
-    const zoom =
-        habitacion
-            ? 1.35
-            : 1;
-
-
-    const centroX =
-        camara.clientWidth / 2;
-
-
-    const centroY =
-        camara.clientHeight / 2;
-
+    const centroX = camara.clientWidth / 2;
+    const centroY = camara.clientHeight / 2;
 
     let izquierda =
-        centroX -
-        miJugador.x * zoom;
-
+        centroX - miJugador.x * zoom;
 
     let arriba =
-        centroY -
-        miJugador.y * zoom;
+        centroY - miJugador.y * zoom;
 
+    const anchoMapa = 1400 * zoom;
+    const altoMapa = 900 * zoom;
 
-    const anchoMapa =
-        1400 * zoom;
+    izquierda = Math.min(
+        0,
+        Math.max(
+            camara.clientWidth - anchoMapa,
+            izquierda
+        )
+    );
 
+    arriba = Math.min(
+        0,
+        Math.max(
+            camara.clientHeight - altoMapa,
+            arriba
+        )
+    );
 
-    const altoMapa =
-        900 * zoom;
-
-
-    izquierda =
-        Math.min(
-            0,
-            Math.max(
-                camara.clientWidth -
-                anchoMapa,
-                izquierda
-            )
-        );
-
-
-    arriba =
-        Math.min(
-            0,
-            Math.max(
-                camara.clientHeight -
-                altoMapa,
-                arriba
-            )
-        );
-
-
-    mapa.style.left =
-        izquierda + "px";
-
-
-    mapa.style.top =
-        arriba + "px";
-
-
-    mapa.style.transform =
-        `scale(${zoom})`;
-
+    mapa.style.left = izquierda + "px";
+    mapa.style.top = arriba + "px";
+    mapa.style.transform = `scale(${zoom})`;
 }
 
-
 /* =========================
-   DETECTAR HABITACION
+   HABITACIÓN
 ========================= */
 
 function detectarHabitacion() {
+    const x = miJugador.x;
+    const y = miJugador.y;
 
-    const x =
-        miJugador.x;
-
-    const y =
-        miJugador.y;
-
-
-    if (
-        x >= 64 &&
-        x <= 386 &&
-        y >= 64 &&
-        y <= 336
-    ) {
-
+    if (x >= 64 && x <= 386 && y >= 64 && y <= 336)
         return "Sala de estar";
 
-    }
-
-
-    if (
-        x >= 539 &&
-        x <= 861 &&
-        y >= 64 &&
-        y <= 336
-    ) {
-
+    if (x >= 539 && x <= 861 && y >= 64 && y <= 336)
         return "Cocina";
 
-    }
-
-
-    if (
-        x >= 1064 &&
-        x <= 1336 &&
-        y >= 64 &&
-        y <= 336
-    ) {
-
+    if (x >= 1064 && x <= 1336 && y >= 64 && y <= 336)
         return "Dormitorio";
 
-    }
-
-
-    if (
-        x >= 64 &&
-        x <= 386 &&
-        y >= 514 &&
-        y <= 836
-    ) {
-
+    if (x >= 64 && x <= 386 && y >= 514 && y <= 836)
         return "Biblioteca";
 
-    }
-
-
-    if (
-        x >= 539 &&
-        x <= 861 &&
-        y >= 514 &&
-        y <= 836
-    ) {
-
+    if (x >= 539 && x <= 861 && y >= 514 && y <= 836)
         return "Sala central";
 
-    }
-
-
-    if (
-        x >= 1064 &&
-        x <= 1336 &&
-        y >= 514 &&
-        y <= 836
-    ) {
-
+    if (x >= 1064 && x <= 1336 && y >= 514 && y <= 836)
         return "Sala de juegos";
 
-    }
-
-
     return null;
-
 }
-
-
-/* =========================
-   ACTUALIZAR HABITACION
-========================= */
 
 function actualizarHabitacion() {
+    const habitacion = detectarHabitacion();
 
-    const habitacion =
-        detectarHabitacion();
-
-
-    if (habitacion) {
-
-        habitacionActual.textContent =
-            "Habitación: " +
-            habitacion;
-
-    }
-    else {
-
-        habitacionActual.textContent =
-            "Pasillo";
-
-    }
-
+    habitacionActual.textContent =
+        habitacion
+            ? "Habitación: " + habitacion
+            : "Pasillo";
 }
 
+/* =========================
+   RESULTADO
+========================= */
+
+function mostrarResultado(estado) {
+    if (partidaTerminada) return;
+
+    partidaTerminada = true;
+    detenerMusica();
+
+    tituloResultado.textContent =
+        estado.ganador === "buscador"
+            ? "¡EL BUSCADOR GANÓ!"
+            : "¡LOS ESCONDIDOS GANARON!";
+
+    textoResultado.textContent =
+        estado.mensajeFinal ||
+        "La partida terminó.";
+
+    overlayPartida.style.display = "flex";
+}
+
+volverMenu.addEventListener("click", () => {
+    location.reload();
+});
 
 /* =========================
    INICIAR
 ========================= */
 
 actualizarMovimiento();
-
 </script>
 
 </body>
