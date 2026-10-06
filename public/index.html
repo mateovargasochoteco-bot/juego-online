@@ -1819,10 +1819,18 @@ function actualizarMovimiento() {
 
     const velocidad = 5;
 
-    /* Durante la cuenta el buscador está quieto. */
+    /*
+       Con 4 jugadores conectados, todos pueden moverse.
+       Esto funciona incluso mientras la sala está esperando
+       el inicio de la partida.
+    */
+    const hayCuatroJugadores =
+        Array.isArray(jugadoresActuales) &&
+        jugadoresActuales.length >= 4;
+
     const puedeMoverse =
-        faseActual === "busqueda" ||
-        (faseActual === "cuenta" && miRol !== "buscador");
+        hayCuatroJugadores &&
+        faseActual !== "fin";
 
     if (puedeMoverse && !partidaTerminada) {
         let nuevoX = miJugador.x;
