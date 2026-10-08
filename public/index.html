@@ -1461,6 +1461,15 @@ function entrarAlJuego(datos) {
    ESTADO DE PARTIDA
 ========================= */
 
+   
+socket.on("estadoSala", (estado) => {
+    const cartel = document.getElementById("esperando-jugadores");
+
+    if (cartel) {
+        cartel.style.display = estado.completa ? "none" : "";
+    }
+});
+
 socket.on("estadoPartida", estado => {
     if (!estado) return;
 
