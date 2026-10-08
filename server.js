@@ -11,6 +11,9 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const salas = new Map();
 
+// =========================
+// GENERAR CÓDIGO DE SALA
+// =========================
 function generarCodigo() {
     const caracteres = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     let codigo = "";
@@ -24,6 +27,9 @@ function generarCodigo() {
     return codigo;
 }
 
+// =========================
+// CONEXIONES
+// =========================
 io.on("connection", (socket) => {
 
     console.log("Jugador conectado:", socket.id);
@@ -62,7 +68,6 @@ io.on("connection", (socket) => {
         console.log(`Sala ${codigo} creada`);
     });
 
-
     // =========================
     // UNIRSE A SALA
     // =========================
@@ -81,6 +86,16 @@ io.on("connection", (socket) => {
 
         if (sala.size >= 4) {
             socket.emit("errorSala", "La sala está llena.");
+            return;
+        }
+
+        // Evitar que un jugador ya conectado
+        // cambie de sala sin salir de la anterior.
+        if (socket.sala) {
+            socket.emit(
+                "errorSala",
+                "Ya estás conectado a una sala."
+            );
             return;
         }
 
@@ -105,7 +120,6 @@ io.on("connection", (socket) => {
         console.log(`Jugador ${socket.id} se unió a ${codigo}`);
     });
 
-
     // =========================
     // MOVIMIENTO
     // =========================
@@ -121,30 +135,49 @@ io.on("connection", (socket) => {
 
         if (!jugador) return;
 
+        if (
+            !posicion ||
+            typeof posicion.x !== "number" ||
+            typeof posicion.y !== "number" ||
+            !Number.isFinite(posicion.x) ||
+            !Number.isFinite(posicion.y)
+        ) {
+            return;
+        }
+
         jugador.x = posicion.x;
         jugador.y = posicion.y;
 
         enviarJugadores(socket.sala);
     });
 
-
     // =========================
     // DESCONECTARSE
     // =========================
     socket.on("disconnect", () => {
 
-        if (!socket.sala) return;
+        const codigo = socket.sala;
 
-        const sala = salas.get(socket.sala);
+        if (!codigo) {
+            console.log("Jugador desconectado:", socket.id);
+            return;
+        }
 
-        if (!sala) return;
+        const sala = salas.get(codigo);
+
+        if (!sala) {
+            console.log("Jugador desconectado:", socket.id);
+            return;
+        }
 
         sala.delete(socket.id);
 
         if (sala.size === 0) {
-            salas.delete(socket.sala);
+            salas.delete(codigo);
         } else {
-            enviarJugadores(socket.sala);
+            // Actualizar jugadores y mostrar de nuevo
+            // el aviso si ya no están los cuatro.
+            enviarJugadores(codigo);
         }
 
         console.log("Jugador desconectado:", socket.id);
@@ -152,7 +185,9 @@ io.on("connection", (socket) => {
 
 });
 
-
+// =========================
+// ACTUALIZAR JUGADORES Y ESTADO
+// =========================
 function enviarJugadores(codigo) {
 
     const sala = salas.get(codigo);
@@ -161,14 +196,19 @@ function enviarJugadores(codigo) {
 
     const jugadores = Array.from(sala.values());
 
+    // Enviar las posiciones y los jugadores
     io.to(codigo).emit("actualizarJugadores", jugadores);
-}
 
+    // Avisar a todos si la sala está completa
+    io.to(codigo).emit("estadoSala", {
+        cantidad: jugadores.length,
+        completa: jugadores.length === 4
+    });
+}
 
 // =========================
 // INICIAR SERVIDOR
 // =========================
-
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, "0.0.0.0", () => {
