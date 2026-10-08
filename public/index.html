@@ -1463,10 +1463,22 @@ function entrarAlJuego(datos) {
 
    
 socket.on("estadoSala", (estado) => {
-    const cartel = document.getElementById("esperando-jugadores");
+    if (!estado) return;
 
-    if (cartel) {
-        cartel.style.display = estado.completa ? "none" : "";
+    const hudEscondite = document.getElementById("hudEscondite");
+
+    if (estado.cantidad !== undefined) {
+        cantidadJugadores.textContent = estado.cantidad;
+    }
+
+    // Ocultar el panel negro mientras se espera si ya están los 4.
+    // Si alguien se desconecta, vuelve a aparecer.
+    if (hudEscondite) {
+        const salaCompleta = estado.completa === true ||
+            Number(estado.cantidad) >= 4;
+
+        hudEscondite.style.display =
+            salaCompleta && faseActual === "esperando" ? "none" : "";
     }
 });
 
@@ -1478,6 +1490,17 @@ socket.on("estadoPartida", estado => {
 
     if (estado.jugadores !== undefined) {
         cantidadJugadores.textContent = estado.jugadores;
+    }
+
+    // Volver a mostrar el HUD cuando comience la cuenta o la búsqueda.
+    // Durante la espera, ocultarlo solamente si hay 4 jugadores.
+    const hudEscondite = document.getElementById("hudEscondite");
+    if (hudEscondite) {
+        const hayCuatroJugadores = jugadoresActuales.length >= 4 ||
+            Number(estado.jugadores) >= 4;
+
+        hudEscondite.style.display =
+            faseActual === "esperando" && hayCuatroJugadores ? "none" : "";
     }
 
     actualizarHUD(estado);
