@@ -136,7 +136,7 @@ button:hover {
 
     background: #555;
 
-    transform-origin: center center;
+    transform-origin: top left;
 
     transition:
         left .08s linear,
@@ -1930,48 +1930,41 @@ function actualizarMovimiento() {
 ========================= */
 
 function actualizarCamara() {
-    const habitacion = detectarHabitacion();
+    if (!camara || !mapa || !miJugador) return;
 
-    let zoom = habitacion ? 1.35 : 1;
+    const anchoVisible = camara.clientWidth;
+    const altoVisible = camara.clientHeight;
 
-    /*
-       El buscador tiene una vista más reducida
-       durante la búsqueda.
-    */
+    // El buscador ve una zona más pequeña durante la búsqueda.
+    let zoom = 1;
+
     if (miRol === "buscador" && faseActual === "busqueda") {
-        zoom = 2.0;
+        zoom = 2;
+    } else if (detectarHabitacion()) {
+        zoom = 1.35;
     }
 
-    const centroX = camara.clientWidth / 2;
-    const centroY = camara.clientHeight / 2;
+    // Centrar la cámara en la posición actual del jugador.
+    let izquierda = anchoVisible / 2 - miJugador.x * zoom;
+    let arriba = altoVisible / 2 - miJugador.y * zoom;
 
-    let izquierda =
-        centroX - miJugador.x * zoom;
-
-    let arriba =
-        centroY - miJugador.y * zoom;
-
+    // Evitar que se vea espacio fuera de los bordes del mapa.
     const anchoMapa = 2100 * zoom;
     const altoMapa = 1350 * zoom;
 
     izquierda = Math.min(
         0,
-        Math.max(
-            camara.clientWidth - anchoMapa,
-            izquierda
-        )
+        Math.max(anchoVisible - anchoMapa, izquierda)
     );
 
     arriba = Math.min(
         0,
-        Math.max(
-            camara.clientHeight - altoMapa,
-            arriba
-        )
+        Math.max(altoVisible - altoMapa, arriba)
     );
 
-    mapa.style.left = izquierda + "px";
-    mapa.style.top = arriba + "px";
+    mapa.style.left = `${izquierda}px`;
+    mapa.style.top = `${arriba}px`;
+    mapa.style.transformOrigin = "top left";
     mapa.style.transform = `scale(${zoom})`;
 }
 
