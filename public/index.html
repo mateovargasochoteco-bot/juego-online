@@ -1524,7 +1524,7 @@ function actualizarHUD(estado) {
 
         rolPartida.textContent =
             miRol === "buscador"
-                ? "Sos el BUSCADOR. No podés moverte todavía."
+                ? "Sos el BUSCADOR. Podés moverte mientras contás."
                 : "Sos ESCONDIDO. ¡Buscá un lugar para esconderte!";
 
         mensajePartida.textContent =
@@ -1860,26 +1860,14 @@ function actualizarMovimiento() {
 
     const velocidad = 5;
 
-    /*
-       Con 2 o más jugadores conectados, todos pueden moverse.
-       Esto funciona incluso mientras la sala está esperando
-       el inicio de la partida.
-    */
-    const hayJugadoresSuficientes =
-        Array.isArray(jugadoresActuales) &&
-        jugadoresActuales.length >= 2;
-
-    // Solo se mueve durante la partida; el buscador debe quedarse quieto mientras cuenta.
+    // El servidor oculta a los escondidos del buscador durante la cuenta,
+    // así que jugadoresActuales puede contener solo al propio buscador.
+    // Por eso no usamos la cantidad de jugadores visibles para habilitar
+    // el movimiento: si la partida está contando o buscando, puede moverse.
     const fasePermiteMovimiento =
         faseActual === "cuenta" || faseActual === "busqueda";
 
-    const buscadorDebeContar =
-        faseActual === "cuenta" && miRol === "buscador";
-
-    const puedeMoverse =
-        hayJugadoresSuficientes &&
-        fasePermiteMovimiento &&
-        !buscadorDebeContar;
+    const puedeMoverse = fasePermiteMovimiento;
 
     if (puedeMoverse && !partidaTerminada) {
         let nuevoX = miJugador.x;
