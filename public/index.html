@@ -945,6 +945,27 @@ button:hover {
     display: none;
 }
 
+
+/* MAPA PROCEDURAL INFINITO: el canvas dibuja únicamente las zonas cercanas. */
+#camara { background: #292929; }
+#mapa {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    background: transparent;
+    transform: none !important;
+    transition: none;
+    overflow: hidden;
+}
+#worldCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
 </style>
 </head>
 
@@ -1032,285 +1053,7 @@ button:hover {
     <div id="camara">
 
         <div id="mapa">
-
-
-            <!-- =========================
-                 HABITACION 1
-            ========================= -->
-
-            <div
-                id="habitacion1"
-                class="habitacion"
-            >
-
-                <div class="nombreHabitacion">
-                    🛋️ Sala de estar
-                </div>
-
-                <div
-                    class="mesa"
-                    style="left:150px; top:195px;"
-                ></div>
-
-                <div
-                    class="alfombra"
-                    style="left:255px; top:255px;"
-                ></div>
-
-            </div>
-
-
-            <!-- =========================
-                 HABITACION 2
-            ========================= -->
-
-            <div
-                id="habitacion2"
-                class="habitacion"
-            >
-
-                <div class="nombreHabitacion">
-                    🍳 Cocina
-                </div>
-
-                <div
-                    class="mesa"
-                    style="left:180px; top:195px;"
-                ></div>
-
-            </div>
-
-
-            <!-- =========================
-                 HABITACION 3
-            ========================= -->
-
-            <div
-                id="habitacion3"
-                class="habitacion"
-            >
-
-                <div class="nombreHabitacion">
-                    🛏️ Dormitorio
-                </div>
-
-                <div
-                    class="alfombra"
-                    style="left:105px; top:180px;"
-                ></div>
-
-            </div>
-
-
-            <!-- =========================
-                 HABITACION 4
-            ========================= -->
-
-            <div
-                id="habitacion4"
-                class="habitacion"
-            >
-
-                <div class="nombreHabitacion">
-                    📚 Biblioteca
-                </div>
-
-                <div
-                    class="mesa"
-                    style="left:150px; top:195px;"
-                ></div>
-
-            </div>
-
-
-            <!-- =========================
-                 HABITACION 5
-            ========================= -->
-
-            <div
-                id="habitacion5"
-                class="habitacion"
-            >
-
-                <div class="nombreHabitacion">
-                    ⭐ Sala central
-                </div>
-
-                <div
-                    class="alfombra"
-                    style="left:150px; top:180px;"
-                ></div>
-
-                <div
-                    class="mesa"
-                    style="left:195px; top:218px;"
-                ></div>
-
-            </div>
-
-
-            <!-- =========================
-                 HABITACION 6
-            ========================= -->
-
-            <div
-                id="habitacion6"
-                class="habitacion"
-            >
-
-                <div class="nombreHabitacion">
-                    🎮 Sala de juegos
-                </div>
-
-                <div
-                    class="mesa"
-                    style="left:150px; top:180px;"
-                ></div>
-
-            </div>
-
-
-            <!-- =========================
-                 PASILLOS
-                 SIN PAREDES
-            ========================= -->
-
-            <div class="pasillo pasillo1"></div>
-            <div class="pasillo pasillo2"></div>
-            <div class="pasillo pasillo3"></div>
-            <div class="pasillo pasillo4"></div>
-            <div class="pasillo pasillo5"></div>
-            <div class="pasillo pasillo6"></div>
-            <div class="pasillo pasillo7"></div>
-
-
-            <!-- =========================
-                 PAREDES
-            ========================= -->
-
-            <div class="pared p1"></div>
-            <div class="pared p2"></div>
-            <div class="pared p3"></div>
-            <div class="pared p4a"></div>
-            <div class="pared p4b"></div>
-
-            <div class="pared p5"></div>
-            <div class="pared p6"></div>
-            <div class="pared p7a"></div>
-            <div class="pared p7b"></div>
-            <div class="pared p8a"></div>
-            <div class="pared p8b"></div>
-
-            <div class="pared p9"></div>
-            <div class="pared p10"></div>
-            <div class="pared p11a"></div>
-            <div class="pared p11b"></div>
-            <div class="pared p12"></div>
-
-            <div class="pared p13"></div>
-            <div class="pared p14"></div>
-            <div class="pared p15"></div>
-            <div class="pared p16a"></div>
-            <div class="pared p16b"></div>
-
-            <div class="pared p17"></div>
-            <div class="pared p18"></div>
-            <div class="pared p19a"></div>
-            <div class="pared p19b"></div>
-            <div class="pared p20a"></div>
-            <div class="pared p20b"></div>
-
-            <div class="pared p21"></div>
-            <div class="pared p22"></div>
-            <div class="pared p23a"></div>
-            <div class="pared p23b"></div>
-            <div class="pared p24"></div>
-
-
-            <!-- =========================
-                 PUERTAS
-            ========================= -->
-
-            <!-- Puertas horizontales -->
-
-            <div
-                class="puerta puerta-horizontal"
-                style="left:338px; top:504px;"
-            ></div>
-
-            <div
-                class="puerta puerta-horizontal"
-                style="left:960px; top:504px;"
-            ></div>
-
-            <div
-                class="puerta puerta-horizontal"
-                style="left:1725px; top:504px;"
-            ></div>
-
-
-            <div
-                class="puerta puerta-horizontal"
-                style="left:338px; top:750px;"
-            ></div>
-
-            <div
-                class="puerta puerta-horizontal"
-                style="left:960px; top:750px;"
-            ></div>
-
-            <div
-                class="puerta puerta-horizontal"
-                style="left:1725px; top:750px;"
-            ></div>
-
-
-            <!-- Puertas verticales -->
-
-            <div
-                class="puerta puerta-vertical"
-                style="left:579px; top:262px;"
-            ></div>
-
-            <div
-                class="puerta puerta-vertical"
-                style="left:788px; top:262px;"
-            ></div>
-
-
-            <div
-                class="puerta puerta-vertical"
-                style="left:1292px; top:262px;"
-            ></div>
-
-            <div
-                class="puerta puerta-vertical"
-                style="left:1575px; top:262px;"
-            ></div>
-
-
-            <div
-                class="puerta puerta-vertical"
-                style="left:579px; top:938px;"
-            ></div>
-
-            <div
-                class="puerta puerta-vertical"
-                style="left:788px; top:938px;"
-            ></div>
-
-
-            <div
-                class="puerta puerta-vertical"
-                style="left:1292px; top:938px;"
-            ></div>
-
-            <div
-                class="puerta puerta-vertical"
-                style="left:1575px; top:938px;"
-            ></div>
-
-
+            <canvas id="worldCanvas" aria-label="Mapa infinito generado mientras explorás"></canvas>
         </div>
 
     </div>
@@ -1345,6 +1088,8 @@ const codigoInput = document.getElementById("codigoInput");
 const codigoSala = document.getElementById("codigoSala");
 const cantidadJugadores = document.getElementById("cantidadJugadores");
 const mapa = document.getElementById("mapa");
+const worldCanvas = document.getElementById("worldCanvas");
+const contextoMapa = worldCanvas.getContext("2d");
 const camara = document.getElementById("camara");
 const mensaje = document.getElementById("mensaje");
 const habitacionActual = document.getElementById("habitacionActual");
@@ -1376,7 +1121,6 @@ let miRol = "esperando";
 let faseActual = "esperando";
 let partidaTerminada = false;
 
-const ESCALA_MAPA = 1.5;
 const RADIO_JUGADOR = 27;
 const teclas = Object.create(null);
 const teclasMovimiento = new Set(["w", "a", "s", "d"]);
@@ -1456,6 +1200,7 @@ function entrarAlJuego(datos) {
     }
 
     actualizarCamara();
+    renderizarMapaProcedural();
 }
 
 /* =========================
@@ -1596,115 +1341,23 @@ socket.on("actualizarJugadores", jugadores => {
 });
 
 function actualizarJugadoresDOM() {
-    const idsVisibles = new Set();
-
-    jugadoresActuales.forEach((jugador, indice) => {
-        idsVisibles.add(jugador.id);
-
-        let elemento = elementosJugadores.get(jugador.id);
-
-        if (!elemento) {
-            elemento = crearElementoJugador(jugador, indice);
-            elementosJugadores.set(jugador.id, elemento);
-            mapa.appendChild(elemento);
-        }
-
-        const esYo = jugador.id === miId;
-
-        if (esYo && !posicionInicialRecibida) {
+    for (const jugador of jugadoresActuales) {
+        if (jugador.id === miId && !posicionInicialRecibida) {
             miJugador.x = jugador.x;
             miJugador.y = jugador.y;
             posicionInicialRecibida = true;
         }
-
-        elemento.classList.toggle("jugador1", esYo);
-        elemento.classList.toggle("otroJugador", !esYo);
-        elemento.classList.toggle("escondido", jugador.visible === false);
-        elemento.classList.toggle("atrapado", jugador.atrapado === true);
-
-        const nombre = elemento.querySelector(".nombreJugador");
-
-        if (nombre) {
-            nombre.textContent = esYo
-                ? "YO"
-                : (jugador.rol === "buscador"
-                    ? "BUSCADOR"
-                    : "Jugador " + (indice + 1));
-        }
-
-        if (!esYo) {
-            elemento.style.left = jugador.x + "px";
-            elemento.style.top = jugador.y + "px";
-        }
-    });
-
-    for (const [id, elemento] of elementosJugadores.entries()) {
-        if (!idsVisibles.has(id)) {
-            elemento.remove();
-            elementosJugadores.delete(id);
-        }
     }
-
-    renderizarJugadorLocal();
+    renderizarMapaProcedural();
 }
 
-function crearElementoJugador(jugador, indice) {
-    const elemento = document.createElement("div");
-    elemento.className = "jugador";
-
-    const cabeza = document.createElement("div");
-    cabeza.className = "cabeza";
-
-    const pelo = document.createElement("div");
-    pelo.className = "pelo";
-
-    const cuerpo = document.createElement("div");
-    cuerpo.className = "cuerpo";
-
-    const brazo1 = document.createElement("div");
-    brazo1.className = "brazo brazo-izquierdo";
-
-    const brazo2 = document.createElement("div");
-    brazo2.className = "brazo brazo-derecho";
-
-    const pierna1 = document.createElement("div");
-    pierna1.className = "pierna pierna-izquierda";
-
-    const pierna2 = document.createElement("div");
-    pierna2.className = "pierna pierna-derecha";
-
-    const nombre = document.createElement("div");
-    nombre.className = "nombreJugador";
-
-    nombre.textContent =
-        jugador.id === miId
-            ? "YO"
-            : "Jugador " + (indice + 1);
-
-    elemento.append(
-        cabeza,
-        pelo,
-        cuerpo,
-        brazo1,
-        brazo2,
-        pierna1,
-        pierna2,
-        nombre
-    );
-
-    elemento.style.left = jugador.x + "px";
-    elemento.style.top = jugador.y + "px";
-
-    return elemento;
+function crearElementoJugador() {
+    // Los jugadores se dibujan directamente en el canvas del mundo.
+    return null;
 }
 
 function renderizarJugadorLocal() {
-    const elemento = elementosJugadores.get(miId);
-
-    if (!elemento) return;
-
-    elemento.style.left = miJugador.x + "px";
-    elemento.style.top = miJugador.y + "px";
+    renderizarMapaProcedural();
 }
 
 /* =========================
@@ -1743,98 +1396,102 @@ window.addEventListener("blur", () => {
     }
 });
 
-/* =========================
-   RECTÁNGULOS
-========================= */
+/* =========================================================
+   MAPA PROCEDURAL INFINITO
+   Las habitaciones se generan por coordenadas. La misma coordenada
+   siempre produce la misma habitación, así todos ven el mismo mundo.
+========================================================= */
+
+const TAM_CELDA = 500;
+const TAM_HABITACION = 360;
+const GROSOR_PARED = 14;
+const ANCHO_PUERTA = 86;
+let zoomCamara = 1;
+let ultimoAnchoCanvas = 0;
+let ultimoAltoCanvas = 0;
+
+function hashCelda(gx, gy, extra = 0) {
+    let n = Math.imul(gx | 0, 374761393) + Math.imul(gy | 0, 668265263) + Math.imul(extra | 0, 1442695041);
+    n = Math.imul(n ^ (n >>> 13), 1274126177);
+    return (n ^ (n >>> 16)) >>> 0;
+}
+
+function aleatorioCelda(gx, gy, extra = 0) {
+    return hashCelda(gx, gy, extra) / 4294967295;
+}
 
 function rect(x, y, ancho, alto) {
     return { x, y, ancho, alto };
 }
 
-/* =========================
-   PAREDES
-   Solamente las paredes bloquean.
-   Los pasillos y las puertas siguen
-   siendo transitables.
-========================= */
-
-const paredes = [
-    rect(50, 50, 350, 14),
-    rect(50, 336, 350, 14),
-    rect(50, 50, 14, 300),
-    rect(386, 50, 14, 110),
-    rect(386, 240, 14, 110),
-
-    rect(525, 50, 350, 14),
-    rect(525, 336, 350, 14),
-    rect(525, 50, 14, 110),
-    rect(525, 240, 14, 110),
-    rect(861, 50, 14, 110),
-    rect(861, 240, 14, 110),
-
-    rect(1050, 50, 300, 14),
-    rect(1050, 336, 300, 14),
-    rect(1050, 50, 14, 110),
-    rect(1050, 240, 14, 110),
-    rect(1336, 50, 14, 300),
-
-    rect(50, 500, 350, 14),
-    rect(50, 836, 350, 14),
-    rect(50, 500, 14, 350),
-    rect(386, 500, 14, 110),
-    rect(386, 690, 14, 160),
-
-    rect(525, 500, 350, 14),
-    rect(525, 836, 350, 14),
-    rect(525, 500, 14, 110),
-    rect(525, 690, 14, 160),
-    rect(861, 500, 14, 110),
-    rect(861, 690, 14, 160),
-
-    rect(1050, 500, 300, 14),
-    rect(1050, 836, 300, 14),
-    rect(1050, 500, 14, 110),
-    rect(1050, 690, 14, 160),
-    rect(1336, 500, 14, 350)
-];
-
-// Ampliar toda la geometría de las paredes al nuevo tamaño del mapa.
-for (const pared of paredes) {
-    pared.x *= ESCALA_MAPA;
-    pared.y *= ESCALA_MAPA;
-    pared.ancho *= ESCALA_MAPA;
-    pared.alto *= ESCALA_MAPA;
+function obtenerHabitacion(gx, gy) {
+    const nombres = ["Sala de estar", "Cocina", "Biblioteca", "Dormitorio", "Sala de juegos", "Sala central", "Depósito", "Laboratorio", "Comedor", "Sala abandonada"];
+    const estilos = ["#77736b", "#777b70", "#74717d", "#82766d", "#6e797d", "#777777"];
+    const semilla = hashCelda(gx, gy);
+    const mitad = TAM_HABITACION / 2;
+    const cx = gx * TAM_CELDA;
+    const cy = gy * TAM_CELDA;
+    const muebles = [];
+    // Cada habitación puede tener cero, uno o dos muebles; se generan de forma estable.
+    const cantidad = hashCelda(gx, gy, 5) % 3;
+    for (let i = 0; i < cantidad; i++) {
+        const ancho = 42 + (hashCelda(gx, gy, 10 + i) % 36);
+        const alto = 34 + (hashCelda(gx, gy, 20 + i) % 30);
+        const mx = cx - 115 + (hashCelda(gx, gy, 30 + i) % 190);
+        const my = cy - 115 + (hashCelda(gx, gy, 40 + i) % 190);
+        // Mantener libre el centro de la habitación para evitar apariciones atrapadas.
+        if (Math.abs(mx - cx) < 75 && Math.abs(my - cy) < 75) continue;
+        muebles.push(rect(mx, my, ancho, alto));
+    }
+    return {
+        gx, gy, cx, cy,
+        x: cx - mitad, y: cy - mitad,
+        ancho: TAM_HABITACION, alto: TAM_HABITACION,
+        nombre: nombres[semilla % nombres.length],
+        color: estilos[(semilla >>> 5) % estilos.length],
+        muebles
+    };
 }
 
-function colisionaConPared(x, y, pared) {
-    const puntoX = Math.max(
-        pared.x,
-        Math.min(x, pared.x + pared.ancho)
-    );
+function paredesDeHabitacion(h) {
+    const x = h.x, y = h.y, w = h.ancho, t = GROSOR_PARED;
+    const g = ANCHO_PUERTA / 2;
+    const cx = h.cx, cy = h.cy;
+    // Las paredes tienen huecos centrados que actúan como puertas.
+    return [
+        rect(x, y, (w / 2) - g, t),
+        rect(cx + g, y, (w / 2) - g, t),
+        rect(x, y + h.alto - t, (w / 2) - g, t),
+        rect(cx + g, y + h.alto - t, (w / 2) - g, t),
+        rect(x, y, t, (h.alto / 2) - g),
+        rect(x, cy + g, t, (h.alto / 2) - g),
+        rect(x + w - t, y, t, (h.alto / 2) - g),
+        rect(x + w - t, cy + g, t, (h.alto / 2) - g)
+    ];
+}
 
-    const puntoY = Math.max(
-        pared.y,
-        Math.min(y, pared.y + pared.alto)
-    );
-
-    const distanciaX = x - puntoX;
-    const distanciaY = y - puntoY;
-
-    return Math.sqrt(
-        distanciaX * distanciaX +
-        distanciaY * distanciaY
-    ) < RADIO_JUGADOR;
+function distanciaPuntoRect(x, y, r) {
+    const px = Math.max(r.x, Math.min(x, r.x + r.ancho));
+    const py = Math.max(r.y, Math.min(y, r.y + r.alto));
+    return Math.hypot(x - px, y - py);
 }
 
 function tocaPared(x, y) {
-    return paredes.some(pared =>
-        colisionaConPared(x, y, pared)
-    );
+    const gx = Math.floor(x / TAM_CELDA);
+    const gy = Math.floor(y / TAM_CELDA);
+    for (let ix = gx - 1; ix <= gx + 1; ix++) {
+        for (let iy = gy - 1; iy <= gy + 1; iy++) {
+            const h = obtenerHabitacion(ix, iy);
+            for (const pared of paredesDeHabitacion(h)) {
+                if (distanciaPuntoRect(x, y, pared) < RADIO_JUGADOR) return true;
+            }
+            for (const mueble of h.muebles) {
+                if (distanciaPuntoRect(x, y, mueble) < RADIO_JUGADOR) return true;
+            }
+        }
+    }
+    return false;
 }
-
-/* =========================
-   MOVIMIENTO
-========================= */
 
 function moverJugador(nuevoX, nuevoY) {
     if (!tocaPared(nuevoX, nuevoY)) {
@@ -1842,13 +1499,112 @@ function moverJugador(nuevoX, nuevoY) {
         miJugador.y = nuevoY;
         return;
     }
+    if (!tocaPared(nuevoX, miJugador.y)) miJugador.x = nuevoX;
+    if (!tocaPared(miJugador.x, nuevoY)) miJugador.y = nuevoY;
+}
 
-    if (!tocaPared(nuevoX, miJugador.y)) {
-        miJugador.x = nuevoX;
+function ajustarCanvas() {
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const ancho = camara.clientWidth;
+    const alto = camara.clientHeight;
+    if (ancho !== ultimoAnchoCanvas || alto !== ultimoAltoCanvas || worldCanvas.width !== Math.round(ancho * dpr) || worldCanvas.height !== Math.round(alto * dpr)) {
+        ultimoAnchoCanvas = ancho;
+        ultimoAltoCanvas = alto;
+        worldCanvas.width = Math.round(ancho * dpr);
+        worldCanvas.height = Math.round(alto * dpr);
+        contextoMapa.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+}
+
+function dibujarRectMundo(r, color, borde = null) {
+    const ancho = camara.clientWidth;
+    const alto = camara.clientHeight;
+    const sx = (r.x - miJugador.x) * zoomCamara + ancho / 2;
+    const sy = (r.y - miJugador.y) * zoomCamara + alto / 2;
+    contextoMapa.fillStyle = color;
+    contextoMapa.fillRect(sx, sy, r.ancho * zoomCamara, r.alto * zoomCamara);
+    if (borde) {
+        contextoMapa.strokeStyle = borde;
+        contextoMapa.lineWidth = Math.max(1, zoomCamara * 2);
+        contextoMapa.strokeRect(sx, sy, r.ancho * zoomCamara, r.alto * zoomCamara);
+    }
+}
+
+function renderizarMapaProcedural() {
+    if (!worldCanvas || !contextoMapa || !camara || juego.style.display === "none") return;
+    ajustarCanvas();
+    const ancho = camara.clientWidth;
+    const alto = camara.clientHeight;
+    contextoMapa.clearRect(0, 0, ancho, alto);
+    contextoMapa.fillStyle = "#353535";
+    contextoMapa.fillRect(0, 0, ancho, alto);
+
+    const margenX = ancho / zoomCamara / 2 + TAM_CELDA;
+    const margenY = alto / zoomCamara / 2 + TAM_CELDA;
+    const minGX = Math.floor((miJugador.x - margenX) / TAM_CELDA);
+    const maxGX = Math.ceil((miJugador.x + margenX) / TAM_CELDA);
+    const minGY = Math.floor((miJugador.y - margenY) / TAM_CELDA);
+    const maxGY = Math.ceil((miJugador.y + margenY) / TAM_CELDA);
+    const habitaciones = [];
+
+    // Solo se crean/dibujan las habitaciones alrededor de la cámara.
+    for (let gx = minGX; gx <= maxGX; gx++) {
+        for (let gy = minGY; gy <= maxGY; gy++) {
+            const h = obtenerHabitacion(gx, gy);
+            habitaciones.push(h);
+            dibujarRectMundo(rect(h.x, h.y, h.ancho, h.alto), h.color, "#514d49");
+            // Patrón de suelo distinto pero determinista por habitación.
+            contextoMapa.strokeStyle = "rgba(20,20,20,.13)";
+            contextoMapa.lineWidth = 1;
+            const sx = (h.x - miJugador.x) * zoomCamara + ancho / 2;
+            const sy = (h.y - miJugador.y) * zoomCamara + alto / 2;
+            for (let k = 1; k < 5; k++) {
+                contextoMapa.beginPath();
+                contextoMapa.moveTo(sx + k * h.ancho * zoomCamara / 5, sy);
+                contextoMapa.lineTo(sx + k * h.ancho * zoomCamara / 5, sy + h.alto * zoomCamara);
+                contextoMapa.stroke();
+            }
+            contextoMapa.fillStyle = "rgba(255,255,255,.55)";
+            contextoMapa.font = `${Math.max(10, 12 * zoomCamara)}px Arial`;
+            contextoMapa.textAlign = "center";
+            contextoMapa.fillText(h.nombre, (h.cx - miJugador.x) * zoomCamara + ancho / 2, (h.y - miJugador.y) * zoomCamara + 25 * zoomCamara);
+            for (const m of h.muebles) {
+                dibujarRectMundo(m, "#4b3829", "#30251c");
+                const tapa = rect(m.x + 5, m.y + 5, Math.max(4, m.ancho - 10), Math.max(4, m.alto - 10));
+                dibujarRectMundo(tapa, "#75583f");
+            }
+        }
     }
 
-    if (!tocaPared(miJugador.x, nuevoY)) {
-        miJugador.y = nuevoY;
+    for (const h of habitaciones) {
+        for (const pared of paredesDeHabitacion(h)) {
+            dibujarRectMundo(pared, "#171717", "#090909");
+        }
+        // Pequeños umbrales claros en las puertas para que se noten los accesos.
+        const g = ANCHO_PUERTA / 2;
+        dibujarRectMundo(rect(h.cx - g, h.y - 2, ANCHO_PUERTA, 4), "#b69b70");
+        dibujarRectMundo(rect(h.cx - g, h.y + h.alto - 2, ANCHO_PUERTA, 4), "#b69b70");
+        dibujarRectMundo(rect(h.x - 2, h.cy - g, 4, ANCHO_PUERTA), "#b69b70");
+        dibujarRectMundo(rect(h.x + h.ancho - 2, h.cy - g, 4, ANCHO_PUERTA), "#b69b70");
+    }
+
+    // Los jugadores se dibujan en coordenadas del mundo, no como elementos HTML.
+    for (const jugador of jugadoresActuales) {
+        const sx = (jugador.x - miJugador.x) * zoomCamara + ancho / 2;
+        const sy = (jugador.y - miJugador.y) * zoomCamara + alto / 2;
+        const esYo = jugador.id === miId;
+        contextoMapa.beginPath();
+        contextoMapa.arc(sx, sy, (esYo ? 17 : 15) * zoomCamara, 0, Math.PI * 2);
+        contextoMapa.fillStyle = jugador.atrapado ? "#888" : (esYo ? "#4ee66b" : (jugador.rol === "buscador" ? "#ff4747" : "#4ba3ff"));
+        contextoMapa.fill();
+        contextoMapa.strokeStyle = "#101010";
+        contextoMapa.lineWidth = 3;
+        contextoMapa.stroke();
+        contextoMapa.fillStyle = "#fff";
+        contextoMapa.font = `bold ${Math.max(10, 12 * zoomCamara)}px Arial`;
+        contextoMapa.textAlign = "center";
+        const etiqueta = esYo ? "YO" : (jugador.rol === "buscador" ? "BUSCADOR" : (jugador.atrapado ? "ATRAPADO" : "ESCONDIDO"));
+        contextoMapa.fillText(etiqueta, sx, sy - 22 * zoomCamara);
     }
 }
 
@@ -1857,142 +1613,60 @@ function actualizarMovimiento() {
         requestAnimationFrame(actualizarMovimiento);
         return;
     }
-
     const velocidad = 5;
-
-    // El servidor oculta a los escondidos del buscador durante la cuenta,
-    // así que jugadoresActuales puede contener solo al propio buscador.
-    // Por eso no usamos la cantidad de jugadores visibles para habilitar
-    // el movimiento: si la partida está contando o buscando, puede moverse.
-    const fasePermiteMovimiento =
-        faseActual === "cuenta" || faseActual === "busqueda";
-
-    const puedeMoverse = fasePermiteMovimiento;
-
-    if (puedeMoverse && !partidaTerminada) {
+    const fasePermiteMovimiento = faseActual === "cuenta" || faseActual === "busqueda";
+    if (fasePermiteMovimiento && !partidaTerminada) {
         let nuevoX = miJugador.x;
         let nuevoY = miJugador.y;
-
         const arriba = teclas["w"] === true;
         const abajo = teclas["s"] === true;
         const izquierda = teclas["a"] === true;
         const derecha = teclas["d"] === true;
-
         if (arriba && !abajo) nuevoY -= velocidad;
         if (abajo && !arriba) nuevoY += velocidad;
         if (izquierda && !derecha) nuevoX -= velocidad;
         if (derecha && !izquierda) nuevoX += velocidad;
-
-        nuevoX = Math.max(
-            RADIO_JUGADOR,
-            Math.min(2100 - RADIO_JUGADOR, nuevoX)
-        );
-
-        nuevoY = Math.max(
-            RADIO_JUGADOR,
-            Math.min(1350 - RADIO_JUGADOR, nuevoY)
-        );
-
-        if (
-            nuevoX !== miJugador.x ||
-            nuevoY !== miJugador.y
-        ) {
+        if (nuevoX !== miJugador.x || nuevoY !== miJugador.y) {
+            const anteriorX = miJugador.x, anteriorY = miJugador.y;
             moverJugador(nuevoX, nuevoY);
-
-            socket.emit("moverJugador", {
-                x: miJugador.x,
-                y: miJugador.y
-            });
+            if (miJugador.x !== anteriorX || miJugador.y !== anteriorY) {
+                socket.emit("moverJugador", { x: miJugador.x, y: miJugador.y });
+            }
         }
     }
-
-    renderizarJugadorLocal();
     actualizarCamara();
     actualizarHabitacion();
-
+    renderizarMapaProcedural();
     requestAnimationFrame(actualizarMovimiento);
 }
 
-/* =========================
-   CÁMARA
-========================= */
-
 function actualizarCamara() {
-    if (!camara || !mapa || !miJugador) return;
-
-    const anchoVisible = camara.clientWidth;
-    const altoVisible = camara.clientHeight;
-
-    // El buscador ve una zona más pequeña durante la búsqueda.
-    let zoom = 1;
-
+    if (!camara || !miJugador) return;
     if (miRol === "buscador" && faseActual === "busqueda") {
-        zoom = 2;
-    } else if (detectarHabitacion()) {
-        zoom = 1.35;
+        zoomCamara = 1.8;
+    } else {
+        zoomCamara = 1;
     }
-
-    // Centrar la cámara en la posición actual del jugador.
-    let izquierda = anchoVisible / 2 - miJugador.x * zoom;
-    let arriba = altoVisible / 2 - miJugador.y * zoom;
-
-    // Evitar que se vea espacio fuera de los bordes del mapa.
-    const anchoMapa = 2100 * zoom;
-    const altoMapa = 1350 * zoom;
-
-    izquierda = Math.min(
-        0,
-        Math.max(anchoVisible - anchoMapa, izquierda)
-    );
-
-    arriba = Math.min(
-        0,
-        Math.max(altoVisible - altoMapa, arriba)
-    );
-
-    mapa.style.left = `${izquierda}px`;
-    mapa.style.top = `${arriba}px`;
-    mapa.style.transformOrigin = "top left";
-    mapa.style.transform = `scale(${zoom})`;
+    renderizarMapaProcedural();
 }
 
-/* =========================
-   HABITACIÓN
-========================= */
-
 function detectarHabitacion() {
-    const x = miJugador.x / ESCALA_MAPA;
-    const y = miJugador.y / ESCALA_MAPA;
-
-    if (x >= 64 && x <= 386 && y >= 64 && y <= 336)
-        return "Sala de estar";
-
-    if (x >= 539 && x <= 861 && y >= 64 && y <= 336)
-        return "Cocina";
-
-    if (x >= 1064 && x <= 1336 && y >= 64 && y <= 336)
-        return "Dormitorio";
-
-    if (x >= 64 && x <= 386 && y >= 514 && y <= 836)
-        return "Biblioteca";
-
-    if (x >= 539 && x <= 861 && y >= 514 && y <= 836)
-        return "Sala central";
-
-    if (x >= 1064 && x <= 1336 && y >= 514 && y <= 836)
-        return "Sala de juegos";
-
-    return null;
+    const gx = Math.round(miJugador.x / TAM_CELDA);
+    const gy = Math.round(miJugador.y / TAM_CELDA);
+    const h = obtenerHabitacion(gx, gy);
+    const dentro = Math.abs(miJugador.x - h.cx) <= TAM_HABITACION / 2 && Math.abs(miJugador.y - h.cy) <= TAM_HABITACION / 2;
+    return dentro ? h.nombre : null;
 }
 
 function actualizarHabitacion() {
     const habitacion = detectarHabitacion();
-
-    habitacionActual.textContent =
-        habitacion
-            ? "Habitación: " + habitacion
-            : "Pasillo";
+    habitacionActual.textContent = habitacion ? "Habitación: " + habitacion : "Pasillo entre habitaciones";
 }
+
+window.addEventListener("resize", () => {
+    ajustarCanvas();
+    renderizarMapaProcedural();
+});
 
 /* =========================
    RESULTADO
