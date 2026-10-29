@@ -47,7 +47,9 @@ function generarCodigo() {
 }
 
 function elegirMusica() {
-    return MUSICAS[Math.floor(Math.random() * MUSICAS.length)];
+    return MUSICAS[
+        Math.floor(Math.random() * MUSICAS.length)
+    ];
 }
 
 function obtenerJugadores(sala) {
@@ -63,6 +65,7 @@ function obtenerJugadores(sala) {
 
 function enviarEstado(codigo) {
     const sala = salas.get(codigo);
+
     if (!sala) return;
 
     let mensaje = "Esperando jugadores...";
@@ -85,15 +88,85 @@ function enviarEstado(codigo) {
     });
 }
 
+function terminarPartida(codigo, titulo, detalle) {
+    const sala = salas.get(codigo);
+
+    if (!sala || sala.fase === "terminada") return;
+
+    sala.fase = "terminada";
+
+    if (sala.intervalo) {
+        clearInterval(sala.intervalo);
+        sala.intervalo = null;
+    }
+
+    io.to(codigo).emit("finPartida", {
+        titulo,
+        detalle
+    });
+
+    enviarEstado(codigo);
+}
+
+function todosAtrapados(sala) {
+    const escondidos = Array.from(sala.jugadores.values())
+        .filter(jugador => jugador.rol === "escondido");
+
+    return escondidos.length > 0 &&
+        escondidos.every(jugador => jugador.atrapado);
+}
+
+function comprobarCaptura(codigo) {
+    const sala = salas.get(codigo);
+
+    if (!sala || sala.fase !== "buscando") return;
+
+    const jugadores = Array.from(sala.jugadores.values());
+
+    const buscador = jugadores.find(
+        jugador => jugador.rol === "buscador"
+    );
+
+    if (!buscador) return;
+
+    for (const jugador of jugadores) {
+        if (
+            jugador.rol !== "escondido" ||
+            jugador.atrapado
+        ) {
+            continue;
+        }
+
+        const distancia = Math.hypot(
+            buscador.x - jugador.x,
+            buscador.y - jugador.y
+        );
+
+        if (distancia < 38) {
+            jugador.atrapado = true;
+        }
+    }
+
+    if (todosAtrapados(sala)) {
+        terminarPartida(
+            codigo,
+            "¡Ganó el buscador!",
+            "Encontró a todos los jugadores escondidos."
+        );
+    }
+}
+
 function iniciarPartida(codigo) {
     const sala = salas.get(codigo);
+
     if (!sala || sala.jugadores.size !== MAX_JUGADORES) return;
     if (sala.fase !== "esperando") return;
 
     const jugadores = Array.from(sala.jugadores.values());
 
-    // Elegir un buscador al azar.
-    const indiceBuscador = Math.floor(Math.random() * jugadores.length);
+    const indiceBuscador = Math.floor(
+        Math.random() * jugadores.length
+    );
 
     jugadores.forEach((jugador, indice) => {
         jugador.rol = indice === indiceBuscador
@@ -102,7 +175,6 @@ function iniciarPartida(codigo) {
 
         jugador.atrapado = false;
 
-        // Ubicar a cada jugador en una zona diferente del mapa.
         jugador.x = POSICIONES_INICIALES[indice].x;
         jugador.y = POSICIONES_INICIALES[indice].y;
     });
@@ -142,77 +214,12 @@ function iniciarPartida(codigo) {
                 "¡Ganaron los que se escondían!",
                 "El buscador no logró encontrar a todos en 100 segundos."
             );
+
             return;
         }
 
         enviarEstado(codigo);
     }, 1000);
-}
-
-function terminarPartida(codigo, titulo, detalle) {
-    const sala = salas.get(codigo);
-    if (!sala || sala.fase === "terminada") return;
-
-    sala.fase = "terminada";
-
-    if (sala.intervalo) {
-        clearInterval(sala.intervalo);
-        sala.intervalo = null;
-    }
-
-    io.to(codigo).emit("finPartida", {
-        titulo,
-        detalle
-    });
-
-    enviarEstado(codigo);
-}
-
-function todosAtrapados(sala) {
-    const escondidos = Array.from(sala.jugadores.values())
-        .filter(jugador => jugador.rol === "escondido");
-
-    return escondidos.length > 0 &&
-        escondidos.every(jugador => jugador.atrapado);
-}
-
-function comprobarCaptura(codigo) {
-    const sala = salas.get(codigo);
-    if (!sala || sala.fase !== "buscando") return;
-
-    const jugadores = Array.from(sala.jugadores.values());
-    const buscador = jugadores.find(jugador =>
-        jugador.rol === "buscador"
-    );
-
-    if (!buscador) return;
-
-    for (const jugador of jugadores) {
-        if (
-            jugador.rol !== "escondido" ||
-            jugador.atrapado
-        ) {
-            continue;
-        }
-
-        const distancia = Math.hypot(
-            buscador.x - jugador.x,
-            buscador.y - jugador.y
-        );
-
-        // Si el buscador se acerca lo suficiente, lo atrapa.
-        if (distancia < 38) {
-            jugador.atrapado = true;
-        }
-    }
-
-    if (todosAtrapados(sala)) {
-        terminarPartida(
-            codigo,
-            "¡Ganó el buscador!",
-            "Encontró a todos los jugadores escondidos."
-        );
-    }
 }
 
 function agregarJugador(socket, codigo, nombre, callback) {
@@ -256,6 +263,7 @@ function agregarJugador(socket, codigo, nombre, callback) {
     };
 
     sala.jugadores.set(socket.id, jugador);
+
     socket.join(codigo);
     socket.data.codigoSala = codigo;
 
@@ -266,7 +274,6 @@ function agregarJugador(socket, codigo, nombre, callback) {
 
     enviarEstado(codigo);
 
-    // La partida empieza al conectarse los cuatro jugadores.
     if (sala.jugadores.size === MAX_JUGADORES) {
         iniciarPartida(codigo);
     }
@@ -300,11 +307,17 @@ io.on("connection", socket => {
             intervalo: null
         });
 
-        agregarJugador(socket, codigo, nombre, callback);
+        agregarJugador(
+            socket,
+            codigo,
+            nombre,
+            callback
+        );
     });
 
     socket.on("unirseSala", (datos, callback) => {
         const nombre = datos?.nombre;
+
         const codigo = String(datos?.codigo || "")
             .trim()
             .toUpperCase();
@@ -317,7 +330,12 @@ io.on("connection", socket => {
             return;
         }
 
-        agregarJugador(socket, codigo, nombre, callback);
+        agregarJugador(
+            socket,
+            codigo,
+            nombre,
+            callback
+        );
     });
 
     socket.on("moverJugador", datos => {
@@ -334,14 +352,20 @@ io.on("connection", socket => {
         }
 
         const jugador = sala.jugadores.get(socket.id);
+
         if (!jugador || jugador.atrapado) return;
 
         const x = Number(datos?.x);
         const y = Number(datos?.y);
 
-        if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+        if (
+            !Number.isFinite(x) ||
+            !Number.isFinite(y)
+        ) {
+            return;
+        }
 
-        // Impedir que el jugador salga de los límites del mapa.
+        // Limitar el movimiento al tamaño del mapa.
         jugador.x = Math.max(
             16,
             Math.min(ANCHO_MAPA - 16, x)
@@ -356,14 +380,18 @@ io.on("connection", socket => {
             comprobarCaptura(codigo);
         }
 
+        // Enviar las posiciones actualizadas a todos.
+        // El HTML ya no reemplaza la posición local del propio jugador.
         enviarEstado(codigo);
     });
 
     socket.on("disconnect", () => {
         const codigo = socket.data.codigoSala;
+
         if (!codigo) return;
 
         const sala = salas.get(codigo);
+
         if (!sala) return;
 
         sala.jugadores.delete(socket.id);
@@ -377,8 +405,6 @@ io.on("connection", socket => {
             return;
         }
 
-        // Si alguien se desconecta durante la partida, se termina
-        // para que los demás no queden atrapados en una ronda incompleta.
         if (
             sala.fase === "contando" ||
             sala.fase === "buscando"
