@@ -4,368 +4,398 @@ const { Server } = require("socket.io");
 const path = require("path");
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+const servidor = http.createServer(app);
+const io = new Server(servidor);
+
+const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, "public")));
 
 const salas = new Map();
 
 const MAX_JUGADORES = 4;
-const TIEMPO_CUENTA = 15;
-const TIEMPO_BUSQUEDA = 100;
-const DISTANCIA_ATRAPAR = 45;
+const TIEMPO_CONTAR = 15;
+const TIEMPO_BUSCAR = 100;
+
+const ANCHO_MAPA = 2050;
+const ALTO_MAPA = 1700;
+
+const MUSICAS = [
+    "/img/gd1.mp3",
+    "/img/gd2.mp3",
+    "/img/gd3.mp3"
+];
+
+const POSICIONES_INICIALES = [
+    { x: 150, y: 150 },
+    { x: 850, y: 700 },
+    { x: 1500, y: 1300 },
+    { x: 1100, y: 300 }
+];
 
 function generarCodigo() {
     const caracteres = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     let codigo = "";
 
     for (let i = 0; i < 5; i++) {
-        codigo += caracteres.charAt(
+        codigo += caracteres[
             Math.floor(Math.random() * caracteres.length)
-        );
+        ];
     }
 
     return codigo;
 }
 
-function crearEstadoSala() {
-    return {
-        jugadores: new Map(),
-        fase: "esperando",
-        buscadorId: null,
-        tiempo: 0,
-        intervalo: null,
-        indiceMusica: Math.floor(Math.random() * 4)
-    };
+function elegirMusica() {
+    return MUSICAS[Math.floor(Math.random() * MUSICAS.length)];
 }
 
-function posicionesIniciales(cantidad) {
-    const posiciones = [
-        { x: 300, y: 300 },
-        { x: 1000, y: 300 },
-        { x: 1800, y: 300 },
-        { x: 1000, y: 1000 }
-    ];
-
-    return posiciones[cantidad % posiciones.length];
+function obtenerJugadores(sala) {
+    return Array.from(sala.jugadores.values()).map(jugador => ({
+        id: jugador.id,
+        nombre: jugador.nombre,
+        x: jugador.x,
+        y: jugador.y,
+        rol: jugador.rol,
+        atrapado: jugador.atrapado
+    }));
 }
 
 function enviarEstado(codigo) {
     const sala = salas.get(codigo);
     if (!sala) return;
 
-    for (const jugador of sala.jugadores.values()) {
-        const visibles = [];
+    let mensaje = "Esperando jugadores...";
 
-        for (const otro of sala.jugadores.values()) {
-            const esYo = otro.id === jugador.id;
-            const esBuscador = otro.id === sala.buscadorId;
-            const estaAtrapado = otro.atrapado === true;
-
-            let visible = true;
-
-            // El buscador no recibe las posiciones de los escondidos libres.
-            if (
-                jugador.id === sala.buscadorId &&
-                !esBuscador &&
-                !estaAtrapado &&
-                (sala.fase === "cuenta" || sala.fase === "busqueda")
-            ) {
-                visible = false;
-            }
-
-            if (visible || esYo) {
-                visibles.push({
-                    id: otro.id,
-                    x: otro.x,
-                    y: otro.y,
-                    rol: esBuscador ? "buscador" : "escondido",
-                    atrapado: estaAtrapado,
-                    visible
-                });
-            }
-        }
-
-        io.to(jugador.id).emit("actualizarJugadores", visibles);
-
-        io.to(jugador.id).emit("estadoPartida", {
-            fase: sala.fase,
-            tiempo: sala.tiempo,
-            jugadores: sala.jugadores.size,
-            miRol: jugador.id === sala.buscadorId
-                ? "buscador"
-                : "escondido"
-        });
+    if (sala.fase === "contando") {
+        mensaje = "¡El buscador está contando! Escóndanse.";
+    } else if (sala.fase === "buscando") {
+        mensaje = "¡El buscador tiene que encontrarlos!";
+    } else if (sala.fase === "terminada") {
+        mensaje = "La partida terminó.";
     }
-}
 
-function detenerTemporizador(sala) {
-    if (sala.intervalo) {
-        clearInterval(sala.intervalo);
-        sala.intervalo = null;
-    }
+    io.to(codigo).emit("estadoSala", {
+        codigo,
+        jugadores: obtenerJugadores(sala),
+        fase: sala.fase,
+        tiempoRestante: sala.tiempoRestante,
+        mensaje,
+        musica: sala.musica
+    });
 }
 
 function iniciarPartida(codigo) {
     const sala = salas.get(codigo);
-
-    if (!sala || sala.jugadores.size < 2) return;
+    if (!sala || sala.jugadores.size !== MAX_JUGADORES) return;
     if (sala.fase !== "esperando") return;
 
-    const lista = Array.from(sala.jugadores.values());
-    const elegido = lista[Math.floor(Math.random() * lista.length)];
+    const jugadores = Array.from(sala.jugadores.values());
 
-    sala.buscadorId = elegido.id;
-    sala.fase = "cuenta";
-    sala.tiempo = TIEMPO_CUENTA;
+    // Elegir un buscador al azar.
+    const indiceBuscador = Math.floor(Math.random() * jugadores.length);
 
-    for (const jugador of lista) {
+    jugadores.forEach((jugador, indice) => {
+        jugador.rol = indice === indiceBuscador
+            ? "buscador"
+            : "escondido";
+
         jugador.atrapado = false;
-    }
 
-    // Cada sala elige una canción al crearla.
-    io.to(codigo).emit("musicaPartida", {
-        indice: sala.indiceMusica
+        // Ubicar a cada jugador en una zona diferente del mapa.
+        jugador.x = POSICIONES_INICIALES[indice].x;
+        jugador.y = POSICIONES_INICIALES[indice].y;
     });
 
+    sala.fase = "contando";
+    sala.tiempoRestante = TIEMPO_CONTAR;
+    sala.musica = elegirMusica();
+
     enviarEstado(codigo);
-    detenerTemporizador(sala);
 
     sala.intervalo = setInterval(() => {
-        if (!salas.has(codigo)) {
-            detenerTemporizador(sala);
+        const salaActual = salas.get(codigo);
+
+        if (!salaActual) return;
+
+        if (
+            salaActual.fase !== "contando" &&
+            salaActual.fase !== "buscando"
+        ) {
             return;
         }
 
-        sala.tiempo--;
+        salaActual.tiempoRestante--;
 
-        if (sala.tiempo <= 0) {
-            if (sala.fase === "cuenta") {
-                sala.fase = "busqueda";
-                sala.tiempo = TIEMPO_BUSQUEDA;
-            } else if (sala.fase === "busqueda") {
-                terminarPartida(codigo, "escondidos");
-                return;
-            }
+        if (
+            salaActual.fase === "contando" &&
+            salaActual.tiempoRestante <= 0
+        ) {
+            salaActual.fase = "buscando";
+            salaActual.tiempoRestante = TIEMPO_BUSCAR;
+        } else if (
+            salaActual.fase === "buscando" &&
+            salaActual.tiempoRestante <= 0
+        ) {
+            terminarPartida(
+                codigo,
+                "¡Ganaron los que se escondían!",
+                "El buscador no logró encontrar a todos en 100 segundos."
+            );
+            return;
         }
 
         enviarEstado(codigo);
     }, 1000);
 }
 
-function comprobarAtrapados(codigo) {
+function terminarPartida(codigo, titulo, detalle) {
     const sala = salas.get(codigo);
-    if (!sala || sala.fase !== "busqueda") return;
+    if (!sala || sala.fase === "terminada") return;
 
-    const buscador = sala.jugadores.get(sala.buscadorId);
+    sala.fase = "terminada";
+
+    if (sala.intervalo) {
+        clearInterval(sala.intervalo);
+        sala.intervalo = null;
+    }
+
+    io.to(codigo).emit("finPartida", {
+        titulo,
+        detalle
+    });
+
+    enviarEstado(codigo);
+}
+
+function todosAtrapados(sala) {
+    const escondidos = Array.from(sala.jugadores.values())
+        .filter(jugador => jugador.rol === "escondido");
+
+    return escondidos.length > 0 &&
+        escondidos.every(jugador => jugador.atrapado);
+}
+
+function comprobarCaptura(codigo) {
+    const sala = salas.get(codigo);
+    if (!sala || sala.fase !== "buscando") return;
+
+    const jugadores = Array.from(sala.jugadores.values());
+    const buscador = jugadores.find(jugador =>
+        jugador.rol === "buscador"
+    );
+
     if (!buscador) return;
 
-    for (const jugador of sala.jugadores.values()) {
-        if (jugador.id === sala.buscadorId) continue;
-        if (jugador.atrapado) continue;
+    for (const jugador of jugadores) {
+        if (
+            jugador.rol !== "escondido" ||
+            jugador.atrapado
+        ) {
+            continue;
+        }
 
-        const dx = buscador.x - jugador.x;
-        const dy = buscador.y - jugador.y;
-        const distancia = Math.hypot(dx, dy);
+        const distancia = Math.hypot(
+            buscador.x - jugador.x,
+            buscador.y - jugador.y
+        );
 
-        if (distancia <= DISTANCIA_ATRAPAR) {
+        // Si el buscador se acerca lo suficiente, lo atrapa.
+        if (distancia < 38) {
             jugador.atrapado = true;
         }
     }
 
-    const restantes = Array.from(sala.jugadores.values()).filter(
-        jugador =>
-            jugador.id !== sala.buscadorId &&
-            !jugador.atrapado
-    );
-
-    if (restantes.length === 0) {
-        terminarPartida(codigo, "buscador");
+    if (todosAtrapados(sala)) {
+        terminarPartida(
+            codigo,
+            "¡Ganó el buscador!",
+            "Encontró a todos los jugadores escondidos."
+        );
     }
 }
 
-function terminarPartida(codigo, ganador) {
+function agregarJugador(socket, codigo, nombre, callback) {
     const sala = salas.get(codigo);
-    if (!sala || sala.fase === "fin") return;
 
-    detenerTemporizador(sala);
-
-    sala.fase = "fin";
-    sala.tiempo = 0;
-
-    const mensajeFinal = ganador === "buscador"
-        ? "El buscador encontró a todos."
-        : "Terminó el tiempo y todavía quedaban escondidos.";
-
-    for (const jugador of sala.jugadores.values()) {
-        io.to(jugador.id).emit("estadoPartida", {
-            fase: "fin",
-            tiempo: 0,
-            jugadores: sala.jugadores.size,
-            miRol: jugador.id === sala.buscadorId
-                ? "buscador"
-                : "escondido",
-            ganador,
-            mensajeFinal
+    if (!sala) {
+        callback({
+            ok: false,
+            mensaje: "Esa sala no existe."
         });
+        return;
     }
 
+    if (sala.fase !== "esperando") {
+        callback({
+            ok: false,
+            mensaje: "La partida ya comenzó. Creá otra sala."
+        });
+        return;
+    }
+
+    if (sala.jugadores.size >= MAX_JUGADORES) {
+        callback({
+            ok: false,
+            mensaje: "La sala está llena. Solo pueden jugar 4 personas."
+        });
+        return;
+    }
+
+    const nombreSeguro = String(nombre || "Jugador")
+        .trim()
+        .slice(0, 16) || "Jugador";
+
+    const jugador = {
+        id: socket.id,
+        nombre: nombreSeguro,
+        x: 150,
+        y: 150,
+        rol: "esperando",
+        atrapado: false
+    };
+
+    sala.jugadores.set(socket.id, jugador);
+    socket.join(codigo);
+    socket.data.codigoSala = codigo;
+
+    callback({
+        ok: true,
+        codigo
+    });
+
     enviarEstado(codigo);
+
+    // La partida empieza al conectarse los cuatro jugadores.
+    if (sala.jugadores.size === MAX_JUGADORES) {
+        iniciarPartida(codigo);
+    }
 }
 
 io.on("connection", socket => {
     console.log("Jugador conectado:", socket.id);
 
-    socket.on("crearSala", () => {
-        let codigo;
+    socket.on("crearSala", (datos, callback) => {
+        const nombre = datos?.nombre;
 
-        do {
+        if (!String(nombre || "").trim()) {
+            callback({
+                ok: false,
+                mensaje: "Escribí tu nombre."
+            });
+            return;
+        }
+
+        let codigo = generarCodigo();
+
+        while (salas.has(codigo)) {
             codigo = generarCodigo();
-        } while (salas.has(codigo));
+        }
 
-        const sala = crearEstadoSala();
-        salas.set(codigo, sala);
-
-        socket.join(codigo);
-        socket.sala = codigo;
-
-        const posicion = posicionesIniciales(0);
-
-        sala.jugadores.set(socket.id, {
-            id: socket.id,
-            x: posicion.x,
-            y: posicion.y,
-            atrapado: false
+        salas.set(codigo, {
+            jugadores: new Map(),
+            fase: "esperando",
+            tiempoRestante: 0,
+            musica: null,
+            intervalo: null
         });
 
-        socket.emit("salaCreada", {
-            codigo,
-            jugadores: sala.jugadores.size
-        });
-
-        enviarEstado(codigo);
-        console.log(`Sala ${codigo} creada`);
+        agregarJugador(socket, codigo, nombre, callback);
     });
 
-    socket.on("unirseSala", codigoRecibido => {
-        const codigo = String(codigoRecibido)
+    socket.on("unirseSala", (datos, callback) => {
+        const nombre = datos?.nombre;
+        const codigo = String(datos?.codigo || "")
             .trim()
             .toUpperCase();
 
-        const sala = salas.get(codigo);
-
-        if (!sala) {
-            socket.emit("errorSala", "La sala no existe.");
+        if (!String(nombre || "").trim()) {
+            callback({
+                ok: false,
+                mensaje: "Escribí tu nombre."
+            });
             return;
         }
 
-        if (sala.jugadores.size >= MAX_JUGADORES) {
-            socket.emit("errorSala", "La sala está llena.");
-            return;
-        }
-
-        if (sala.fase !== "esperando") {
-            socket.emit(
-                "errorSala",
-                "La partida ya comenzó. Esperá a la próxima."
-            );
-            return;
-        }
-
-        socket.join(codigo);
-        socket.sala = codigo;
-
-        const posicion = posicionesIniciales(sala.jugadores.size);
-
-        sala.jugadores.set(socket.id, {
-            id: socket.id,
-            x: posicion.x,
-            y: posicion.y,
-            atrapado: false
-        });
-
-        socket.emit("salaUnida", {
-            codigo,
-            jugadores: sala.jugadores.size
-        });
-
-        enviarEstado(codigo);
-
-        console.log(`Jugador ${socket.id} se unió a ${codigo}`);
-
-        if (sala.jugadores.size >= 2) {
-            setTimeout(() => iniciarPartida(codigo), 800);
-        }
+        agregarJugador(socket, codigo, nombre, callback);
     });
 
-    socket.on("moverJugador", posicion => {
-        if (!socket.sala) return;
+    socket.on("moverJugador", datos => {
+        const codigo = socket.data.codigoSala;
+        const sala = salas.get(codigo);
 
-        const sala = salas.get(socket.sala);
         if (!sala) return;
 
+        if (
+            sala.fase !== "contando" &&
+            sala.fase !== "buscando"
+        ) {
+            return;
+        }
+
         const jugador = sala.jugadores.get(socket.id);
-        if (!jugador) return;
+        if (!jugador || jugador.atrapado) return;
 
-        if (sala.fase !== "cuenta" && sala.fase !== "busqueda") {
-            return;
-        }
-
-        if (sala.fase === "cuenta" && socket.id === sala.buscadorId) {
-            return;
-        }
-
-        if (jugador.atrapado) return;
-
-        const x = Number(posicion?.x);
-        const y = Number(posicion?.y);
+        const x = Number(datos?.x);
+        const y = Number(datos?.y);
 
         if (!Number.isFinite(x) || !Number.isFinite(y)) return;
 
-        jugador.x = Math.max(20, Math.min(2080, x));
-        jugador.y = Math.max(20, Math.min(1330, y));
+        // Impedir que el jugador salga de los límites del mapa.
+        jugador.x = Math.max(
+            16,
+            Math.min(ANCHO_MAPA - 16, x)
+        );
 
-        comprobarAtrapados(socket.sala);
-        enviarEstado(socket.sala);
+        jugador.y = Math.max(
+            16,
+            Math.min(ALTO_MAPA - 16, y)
+        );
+
+        if (sala.fase === "buscando") {
+            comprobarCaptura(codigo);
+        }
+
+        enviarEstado(codigo);
     });
 
     socket.on("disconnect", () => {
-        if (!socket.sala) return;
+        const codigo = socket.data.codigoSala;
+        if (!codigo) return;
 
-        const codigo = socket.sala;
         const sala = salas.get(codigo);
         if (!sala) return;
 
         sala.jugadores.delete(socket.id);
 
         if (sala.jugadores.size === 0) {
-            detenerTemporizador(sala);
+            if (sala.intervalo) {
+                clearInterval(sala.intervalo);
+            }
+
             salas.delete(codigo);
             return;
         }
 
+        // Si alguien se desconecta durante la partida, se termina
+        // para que los demás no queden atrapados en una ronda incompleta.
         if (
-            socket.id === sala.buscadorId &&
-            sala.fase !== "esperando" &&
-            sala.fase !== "fin"
+            sala.fase === "contando" ||
+            sala.fase === "buscando"
         ) {
-            detenerTemporizador(sala);
-            sala.fase = "esperando";
-            sala.buscadorId = null;
-            sala.tiempo = 0;
-
-            for (const jugador of sala.jugadores.values()) {
-                jugador.atrapado = false;
-            }
+            terminarPartida(
+                codigo,
+                "Partida cancelada",
+                "Un jugador se desconectó."
+            );
+        } else {
+            enviarEstado(codigo);
         }
 
-        enviarEstado(codigo);
+        console.log("Jugador desconectado:", socket.id);
     });
 });
 
-const PORT = process.env.PORT || 3000;
-
-server.listen(PORT, "0.0.0.0", () => {
+servidor.listen(PORT, () => {
     console.log(`Servidor iniciado en http://localhost:${PORT}`);
 });
