@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escondite multijugador</title>
+    <title>Escondite online</title>
 
     <style>
         * {
@@ -16,10 +16,6 @@
             background: #10151c;
             color: white;
             font-family: Arial, sans-serif;
-        }
-
-        button, input {
-            font: inherit;
         }
 
         #menu {
@@ -39,23 +35,24 @@
             color: #ffcc44;
             text-align: center;
             font-size: clamp(28px, 5vw, 52px);
-            margin: 0 0 10px;
+        }
+
+        #menu input,
+        #menu button {
+            width: min(320px, 90vw);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
         }
 
         #menu input {
-            width: min(320px, 90vw);
-            padding: 12px;
             border: 2px solid #718096;
-            border-radius: 8px;
-            background: #fff;
+            background: white;
             color: #111;
         }
 
         #menu button {
-            width: min(320px, 90vw);
-            padding: 12px;
             border: 0;
-            border-radius: 8px;
             background: #e85d04;
             color: white;
             font-weight: bold;
@@ -78,7 +75,6 @@
             position: fixed;
             inset: 0;
             overflow: hidden;
-            background: #18231e;
         }
 
         #interfaz {
@@ -94,11 +90,13 @@
             justify-content: space-between;
             gap: 10px;
             flex-wrap: wrap;
-            background: rgba(0, 0, 0, 0.82);
+            background: rgba(0, 0, 0, 0.85);
             border-bottom: 2px solid #e85d04;
         }
 
-        #estado, #reloj, #sala-info {
+        #estado,
+        #reloj,
+        #sala-info {
             font-weight: bold;
         }
 
@@ -122,8 +120,10 @@
             height: 1700px;
             overflow: hidden;
             background-color: #35483a;
-            background-image:
-                radial-gradient(#405744 1.5px, transparent 1.5px);
+            background-image: radial-gradient(
+                #405744 1.5px,
+                transparent 1.5px
+            );
             background-size: 24px 24px;
             will-change: left, top;
         }
@@ -162,9 +162,9 @@
 
         .pared {
             position: absolute;
+            z-index: 3;
             background: #30271f;
             border: 2px solid #171411;
-            z-index: 3;
         }
 
         .mueble {
@@ -383,6 +383,7 @@
 </head>
 
 <body>
+
     <div id="menu">
         <h1>ESCONDITE ONLINE</h1>
 
@@ -401,6 +402,7 @@
     </div>
 
     <div id="juego">
+
         <div id="interfaz">
             <div id="sala-info">Sala: ---</div>
             <div id="estado">Esperando jugadores...</div>
@@ -425,11 +427,13 @@
             <p id="detalle-resultado"></p>
             <button onclick="location.reload()">Volver al menú</button>
         </div>
+
     </div>
 
     <audio id="musica" loop></audio>
 
     <script src="/socket.io/socket.io.js"></script>
+
     <script>
         const socket = io();
 
@@ -462,42 +466,72 @@
         let fase = "esperando";
         let tiempoRestante = 0;
         let rol = "";
-        let posicion = { x: 120, y: 120 };
+
+        let posicion = { x: 150, y: 150 };
+
         let teclas = {};
         let ultimoEnvio = 0;
         let finPartida = false;
+
+        // IMPORTANTE:
+        // Recibimos nuestra posición inicial del servidor una sola vez.
+        // Después no dejamos que los estados atrasados la sobrescriban.
+        let posicionInicializada = false;
 
         const elementosJugadores = new Map();
         const paredes = [];
 
         const habitaciones = [
-            "Sala de estar", "Cocina", "Dormitorio",
-            "Biblioteca", "Sala central", "Sala de juegos",
-            "Habitación 7", "Habitación 8", "Habitación 9"
+            "Sala de estar",
+            "Cocina",
+            "Dormitorio",
+            "Biblioteca",
+            "Sala central",
+            "Sala de juegos",
+            "Habitación 7",
+            "Habitación 8",
+            "Habitación 9"
         ];
 
         function crearPared(x, y, ancho, alto) {
             const pared = document.createElement("div");
+
             pared.className = "pared";
             pared.style.left = x + "px";
             pared.style.top = y + "px";
             pared.style.width = ancho + "px";
             pared.style.height = alto + "px";
+
             mundo.appendChild(pared);
 
             paredes.push({
-                x, y, ancho, alto
+                x,
+                y,
+                ancho,
+                alto
             });
         }
 
         function crearTramoHorizontal(x1, x2, y) {
             if (x2 <= x1) return;
-            crearPared(x1, y, x2 - x1, GROSOR_PARED);
+
+            crearPared(
+                x1,
+                y,
+                x2 - x1,
+                GROSOR_PARED
+            );
         }
 
         function crearTramoVertical(y1, y2, x) {
             if (y2 <= y1) return;
-            crearPared(x, y1, GROSOR_PARED, y2 - y1);
+
+            crearPared(
+                x,
+                y1,
+                GROSOR_PARED,
+                y2 - y1
+            );
         }
 
         function crearHabitacion(fila, columna, indice) {
@@ -505,54 +539,108 @@
             const y = 50 + fila * FILA;
 
             const habitacion = document.createElement("div");
+
             habitacion.className = "habitacion";
             habitacion.style.left = x + "px";
             habitacion.style.top = y + "px";
 
             const titulo = document.createElement("div");
+
             titulo.className = "nombre-habitacion";
             titulo.textContent = habitaciones[indice];
-            habitacion.appendChild(titulo);
 
+            habitacion.appendChild(titulo);
             mundo.appendChild(habitacion);
 
             const centroX = x + ANCHO_HAB / 2;
             const centroY = y + ALTO_HAB / 2;
             const mitadPuerta = ANCHO_PUERTA / 2;
 
-            // Pared superior: puerta si hay otra habitación arriba.
+            // Pared superior.
             if (fila > 0) {
-                crearTramoHorizontal(x, centroX - mitadPuerta, y);
-                crearTramoHorizontal(centroX + mitadPuerta, x + ANCHO_HAB, y);
+                crearTramoHorizontal(
+                    x,
+                    centroX - mitadPuerta,
+                    y
+                );
+
+                crearTramoHorizontal(
+                    centroX + mitadPuerta,
+                    x + ANCHO_HAB,
+                    y
+                );
             } else {
-                crearTramoHorizontal(x, x + ANCHO_HAB, y);
+                crearTramoHorizontal(
+                    x,
+                    x + ANCHO_HAB,
+                    y
+                );
             }
 
-            // Pared inferior: puerta si hay otra habitación abajo.
+            // Pared inferior.
             if (fila < 2) {
-                crearTramoHorizontal(x, centroX - mitadPuerta, y + ALTO_HAB - GROSOR_PARED);
-                crearTramoHorizontal(centroX + mitadPuerta, x + ANCHO_HAB, y + ALTO_HAB - GROSOR_PARED);
+                crearTramoHorizontal(
+                    x,
+                    centroX - mitadPuerta,
+                    y + ALTO_HAB - GROSOR_PARED
+                );
+
+                crearTramoHorizontal(
+                    centroX + mitadPuerta,
+                    x + ANCHO_HAB,
+                    y + ALTO_HAB - GROSOR_PARED
+                );
             } else {
-                crearTramoHorizontal(x, x + ANCHO_HAB, y + ALTO_HAB - GROSOR_PARED);
+                crearTramoHorizontal(
+                    x,
+                    x + ANCHO_HAB,
+                    y + ALTO_HAB - GROSOR_PARED
+                );
             }
 
             // Pared izquierda.
             if (columna > 0) {
-                crearTramoVertical(y, centroY - mitadPuerta, x);
-                crearTramoVertical(centroY + mitadPuerta, y + ALTO_HAB, x);
+                crearTramoVertical(
+                    y,
+                    centroY - mitadPuerta,
+                    x
+                );
+
+                crearTramoVertical(
+                    centroY + mitadPuerta,
+                    y + ALTO_HAB,
+                    x
+                );
             } else {
-                crearTramoVertical(y, y + ALTO_HAB, x);
+                crearTramoVertical(
+                    y,
+                    y + ALTO_HAB,
+                    x
+                );
             }
 
             // Pared derecha.
             if (columna < 2) {
-                crearTramoVertical(y, centroY - mitadPuerta, x + ANCHO_HAB - GROSOR_PARED);
-                crearTramoVertical(centroY + mitadPuerta, y + ALTO_HAB, x + ANCHO_HAB - GROSOR_PARED);
+                crearTramoVertical(
+                    y,
+                    centroY - mitadPuerta,
+                    x + ANCHO_HAB - GROSOR_PARED
+                );
+
+                crearTramoVertical(
+                    centroY + mitadPuerta,
+                    y + ALTO_HAB,
+                    x + ANCHO_HAB - GROSOR_PARED
+                );
             } else {
-                crearTramoVertical(y, y + ALTO_HAB, x + ANCHO_HAB - GROSOR_PARED);
+                crearTramoVertical(
+                    y,
+                    y + ALTO_HAB,
+                    x + ANCHO_HAB - GROSOR_PARED
+                );
             }
 
-            // Muebles decorativos; no bloquean el movimiento.
+            // Muebles decorativos.
             const muebles = [
                 { dx: 70, dy: 90, w: 90, h: 45 },
                 { dx: 370, dy: 270, w: 110, h: 50 }
@@ -560,11 +648,13 @@
 
             muebles.forEach(m => {
                 const el = document.createElement("div");
+
                 el.className = "mueble";
                 el.style.left = (x + m.dx) + "px";
                 el.style.top = (y + m.dy) + "px";
                 el.style.width = m.w + "px";
                 el.style.height = m.h + "px";
+
                 mundo.appendChild(el);
             });
         }
@@ -608,6 +698,7 @@
 
         function crearJugadorElemento(jugador) {
             const el = document.createElement("div");
+
             el.className = "jugador";
             el.dataset.id = jugador.id;
 
@@ -624,19 +715,40 @@
 
             mundo.appendChild(el);
             elementosJugadores.set(jugador.id, el);
+
             return el;
         }
 
         function distancia(a, b) {
-            return Math.hypot(a.x - b.x, a.y - b.y);
+            return Math.hypot(
+                a.x - b.x,
+                a.y - b.y
+            );
         }
 
         function actualizarJugadores() {
             const yo = jugadores.find(j => j.id === miId);
+
             if (yo) {
-                posicion.x = yo.x;
-                posicion.y = yo.y;
                 rol = yo.rol;
+
+                // CORRECCIÓN:
+                // Solo aceptamos nuestra posición del servidor
+                // al comenzar la ronda. Después conservamos la local.
+                if (
+                    fase === "contando" &&
+                    !posicionInicializada
+                ) {
+                    posicion.x = yo.x;
+                    posicion.y = yo.y;
+                    posicionInicializada = true;
+                }
+            }
+
+            // Si volvemos a esperar una nueva partida,
+            // permitimos recibir una nueva posición inicial.
+            if (fase === "esperando") {
+                posicionInicializada = false;
             }
 
             const visibles = new Set();
@@ -644,7 +756,7 @@
             jugadores.forEach(j => {
                 const atrapado = j.atrapado === true;
 
-                // El buscador solo ve a los escondidos dentro de su radio.
+                // El buscador no ve a los escondidos que están lejos.
                 if (
                     rol === "buscador" &&
                     j.rol === "escondido" &&
@@ -657,10 +769,21 @@
                 visibles.add(j.id);
 
                 let el = elementosJugadores.get(j.id);
-                if (!el) el = crearJugadorElemento(j);
 
-                el.style.left = j.x + "px";
-                el.style.top = j.y + "px";
+                if (!el) {
+                    el = crearJugadorElemento(j);
+                }
+
+                // Para nuestro personaje usamos la posición local.
+                // Para los demás usamos la posición del servidor.
+                if (j.id === miId) {
+                    el.style.left = posicion.x + "px";
+                    el.style.top = posicion.y + "px";
+                } else {
+                    el.style.left = j.x + "px";
+                    el.style.top = j.y + "px";
+                }
+
                 el.classList.toggle("propio", j.id === miId);
                 el.classList.toggle("buscador", j.rol === "buscador");
                 el.classList.toggle("atrapado", atrapado);
@@ -677,7 +800,9 @@
             }
 
             oscuridad.style.display =
-                rol === "buscador" && fase === "buscando" ? "block" : "none";
+                rol === "buscador" && fase === "buscando"
+                    ? "block"
+                    : "none";
 
             dibujarMinimapa();
             moverCamara();
@@ -689,16 +814,33 @@
 
             const camX = Math.max(
                 0,
-                Math.min(ANCHO_MAPA - ancho, posicion.x - ancho / 2)
+                Math.min(
+                    ANCHO_MAPA - ancho,
+                    posicion.x - ancho / 2
+                )
             );
 
             const camY = Math.max(
                 0,
-                Math.min(ALTO_MAPA - alto, posicion.y - alto / 2)
+                Math.min(
+                    ALTO_MAPA - alto,
+                    posicion.y - alto / 2
+                )
             );
 
             mundo.style.left = -camX + "px";
             mundo.style.top = -camY + "px";
+
+            // La luz del buscador queda centrada en la pantalla.
+            oscuridad.style.background = `
+                radial-gradient(
+                    circle 250px at
+                    ${posicion.x - camX}px
+                    ${posicion.y - camY}px,
+                    transparent 0 65%,
+                    rgba(0, 0, 0, 0.96) 100%
+                )
+            `;
         }
 
         function dibujarMinimapa() {
@@ -706,6 +848,7 @@
             const h = minimapa.height;
 
             ctx.clearRect(0, 0, w, h);
+
             ctx.fillStyle = "#26372b";
             ctx.fillRect(0, 0, w, h);
 
@@ -715,6 +858,7 @@
             for (let fila = 0; fila < 3; fila++) {
                 for (let columna = 0; columna < 3; columna++) {
                     ctx.fillStyle = "#8a7b62";
+
                     ctx.fillRect(
                         (50 + columna * PASO) * sx,
                         (50 + fila * FILA) * sy,
@@ -724,7 +868,6 @@
                 }
             }
 
-            // Por privacidad, el buscador no ve a los escondidos en el minimapa.
             jugadores.forEach(j => {
                 if (
                     rol === "buscador" &&
@@ -744,7 +887,15 @@
                             : "#ffee55";
 
                 ctx.beginPath();
-                ctx.arc(j.x * sx, j.y * sy, 5, 0, Math.PI * 2);
+
+                ctx.arc(
+                    j.id === miId ? posicion.x * sx : j.x * sx,
+                    j.id === miId ? posicion.y * sy : j.y * sy,
+                    5,
+                    0,
+                    Math.PI * 2
+                );
+
                 ctx.fill();
             });
         }
@@ -752,27 +903,37 @@
         function reproducirMusica(nombreArchivo) {
             if (!nombreArchivo) return;
 
+            // No reiniciar la misma canción cada vez que llega el estado.
+            if (musica.src.endsWith(nombreArchivo)) return;
+
             musica.src = nombreArchivo;
             musica.volume = 0.35;
+
             musica.play().catch(() => {
-                // Algunos navegadores esperan una interacción del usuario.
+                // El navegador puede esperar una interacción del usuario.
             });
         }
 
         function entrarAlJuego(codigo) {
             codigoSala = codigo;
+
             menu.style.display = "none";
             juego.style.display = "block";
+
             salaInfo.textContent = "Sala: " + codigo;
+
             crearMapa();
             moverCamara();
         }
 
         document.getElementById("crear").addEventListener("click", () => {
-            const nombre = document.getElementById("nombre").value.trim();
+            const nombre = document
+                .getElementById("nombre")
+                .value.trim();
 
             if (!nombre) {
-                mensajeMenu.textContent = "Escribí tu nombre antes de crear la sala.";
+                mensajeMenu.textContent =
+                    "Escribí tu nombre antes de crear la sala.";
                 return;
             }
 
@@ -784,29 +945,44 @@
                 }
 
                 miId = socket.id;
+                posicionInicializada = false;
+
                 entrarAlJuego(respuesta.codigo);
             });
         });
 
         document.getElementById("unirse").addEventListener("click", () => {
-            const nombre = document.getElementById("nombre").value.trim();
-            const codigo = document.getElementById("codigo").value.trim().toUpperCase();
+            const nombre = document
+                .getElementById("nombre")
+                .value.trim();
+
+            const codigo = document
+                .getElementById("codigo")
+                .value.trim()
+                .toUpperCase();
 
             if (!nombre || !codigo) {
-                mensajeMenu.textContent = "Ingresá tu nombre y el código de sala.";
+                mensajeMenu.textContent =
+                    "Ingresá tu nombre y el código de sala.";
                 return;
             }
 
-            socket.emit("unirseSala", { nombre, codigo }, respuesta => {
-                if (!respuesta || !respuesta.ok) {
-                    mensajeMenu.textContent =
-                        respuesta?.mensaje || "No se pudo entrar a la sala.";
-                    return;
-                }
+            socket.emit(
+                "unirseSala",
+                { nombre, codigo },
+                respuesta => {
+                    if (!respuesta || !respuesta.ok) {
+                        mensajeMenu.textContent =
+                            respuesta?.mensaje || "No se pudo entrar a la sala.";
+                        return;
+                    }
 
-                miId = socket.id;
-                entrarAlJuego(respuesta.codigo);
-            });
+                    miId = socket.id;
+                    posicionInicializada = false;
+
+                    entrarAlJuego(respuesta.codigo);
+                }
+            );
         });
 
         socket.on("estadoSala", datos => {
@@ -814,7 +990,9 @@
             fase = datos.fase || "esperando";
             tiempoRestante = datos.tiempoRestante ?? 0;
 
-            estado.textContent = datos.mensaje || "Esperando jugadores...";
+            estado.textContent =
+                datos.mensaje || "Esperando jugadores...";
+
             reloj.textContent = fase === "esperando"
                 ? jugadores.length + "/4 jugadores"
                 : tiempoRestante + " s";
@@ -829,11 +1007,15 @@
         socket.on("finPartida", datos => {
             finPartida = true;
             fase = "terminada";
+
             resultado.style.display = "flex";
+
             document.getElementById("texto-resultado").textContent =
                 datos.titulo || "Fin de la partida";
+
             document.getElementById("detalle-resultado").textContent =
                 datos.detalle || "";
+
             musica.pause();
         });
 
@@ -844,9 +1026,15 @@
         window.addEventListener("keydown", e => {
             const tecla = e.key.toLowerCase();
 
-            if ([
-                "arrowup", "arrowdown", "arrowleft", "arrowright", " "
-            ].includes(tecla)) {
+            if (
+                [
+                    "arrowup",
+                    "arrowdown",
+                    "arrowleft",
+                    "arrowright",
+                    " "
+                ].includes(tecla)
+            ) {
                 e.preventDefault();
             }
 
@@ -880,17 +1068,22 @@
             if (teclas["a"] || teclas["arrowleft"]) dx -= 1;
             if (teclas["d"] || teclas["arrowright"]) dx += 1;
 
-            if (dx === 0 && dy === 0) return;
+            if (dx === 0 && dy === 0) {
+                return;
+            }
 
             const largo = Math.hypot(dx, dy);
+
             dx /= largo;
             dy /= largo;
 
             const velocidad = 3.2;
+
             const nuevoX = posicion.x + dx * velocidad;
             const nuevoY = posicion.y + dy * velocidad;
 
-            // Comprobar X e Y por separado permite deslizarse junto a paredes.
+            // Comprobar X e Y por separado para permitir deslizarse
+            // junto a las paredes.
             if (!colisiona(nuevoX, posicion.y)) {
                 posicion.x = nuevoX;
             }
@@ -899,11 +1092,22 @@
                 posicion.y = nuevoY;
             }
 
+            // Actualizar nuestro personaje sin esperar al servidor.
+            const miElemento = elementosJugadores.get(miId);
+
+            if (miElemento) {
+                miElemento.style.left = posicion.x + "px";
+                miElemento.style.top = posicion.y + "px";
+            }
+
             moverCamara();
+            dibujarMinimapa();
 
             const ahora = performance.now();
+
             if (ahora - ultimoEnvio > 45) {
                 ultimoEnvio = ahora;
+
                 socket.emit("moverJugador", {
                     x: posicion.x,
                     y: posicion.y
@@ -916,5 +1120,6 @@
 
         window.addEventListener("resize", moverCamara);
     </script>
+
 </body>
 </html>
