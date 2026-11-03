@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Escondite Online</title>
+<script src="/socket.io/socket.io.js"></script>
 
 <style>
 * { box-sizing: border-box; }
-
 body {
     margin: 0;
     background: #111;
@@ -15,611 +15,349 @@ body {
     font-family: Arial, sans-serif;
     overflow: hidden;
 }
-
-/* MENU ORIGINAL */
 #menu {
-    width: 400px;
+    width: 380px;
     max-width: 90%;
-    margin: 60px auto;
-    padding: 30px;
-    background: #2c3038;
-    border-radius: 15px;
+    margin: 70px auto;
+    padding: 25px;
+    background: #292d35;
+    border-radius: 14px;
     text-align: center;
 }
-
 input, button {
     width: 100%;
     padding: 12px;
     margin-top: 10px;
-    border: none;
-    border-radius: 8px;
+    border: 0;
+    border-radius: 7px;
     font-size: 16px;
 }
-
 button {
-    background: #4caf50;
+    background: #35a853;
     color: white;
     cursor: pointer;
 }
+button:hover { background: #27833f; }
+#mensaje { color: #ffd166; min-height: 20px; }
 
-button:hover { background: #45a049; }
-#mensaje { color: #ffd166; }
-
-#juego {
-    display: none;
-    width: 100vw;
-    height: 100vh;
-}
-
+#juego { display: none; width: 100vw; height: 100vh; }
 #informacion {
     position: fixed;
-    z-index: 1000;
+    z-index: 100;
     top: 0;
     left: 0;
     width: 100%;
-    padding: 8px;
-    text-align: center;
-    background: rgba(0,0,0,.9);
+    height: 65px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    background: #080808;
     border-bottom: 2px solid white;
 }
-
-#informacion h2 { margin: 2px; }
-#informacion p { margin: 3px; }
-
-#codigoSala {
-    color: #ffd166;
-    letter-spacing: 4px;
-}
+#codigoSala { color: #ffd166; letter-spacing: 3px; }
+#temporizadorPartida { font-size: 25px; color: #ffcc00; }
 
 #camara {
     position: fixed;
-    top: 82px;
+    top: 65px;
     left: 0;
     width: 100vw;
-    height: calc(100vh - 82px);
+    height: calc(100vh - 65px);
     overflow: hidden;
     background: #222;
 }
-
-/* MAPA ORIGINAL */
 #mapa {
     position: absolute;
-    width: 2100px;
-    height: 1350px;
+    width: 1450px;
+    height: 1200px;
     left: 0;
     top: 0;
-    background: #555;
-    transform-origin: center center;
-    transition: left .08s linear, top .08s linear, transform .25s ease;
+    transform-origin: top left;
+    background: #454545;
 }
 
+/* Habitaciones */
 .habitacion {
     position: absolute;
+    width: 350px;
+    height: 300px;
     background: #777;
+    border: 13px solid #171717;
     z-index: 2;
 }
-
-#habitacion1 {
-    left: 75px; top: 75px;
-    width: 525px; height: 450px;
-}
-
-#habitacion2 {
-    left: 788px; top: 75px;
-    width: 525px; height: 450px;
-}
-
-#habitacion3 {
-    left: 1575px; top: 75px;
-    width: 450px; height: 450px;
-}
-
-#habitacion4 {
-    left: 75px; top: 750px;
-    width: 525px; height: 525px;
-}
-
-#habitacion5 {
-    left: 788px; top: 750px;
-    width: 525px; height: 525px;
-}
-
-#habitacion6 {
-    left: 1575px; top: 750px;
-    width: 450px; height: 525px;
-}
-
-/* PASILLOS ORIGINALES */
-.pasillo {
+.habitacion::after {
+    content: "";
     position: absolute;
-    background: #555;
-    z-index: 1;
-}
-
-.pasillo1 { left: 600px; top: 262px; width: 188px; height: 120px; }
-.pasillo2 { left: 1312px; top: 262px; width: 262px; height: 120px; }
-.pasillo3 { left: 600px; top: 938px; width: 188px; height: 120px; }
-.pasillo4 { left: 1312px; top: 938px; width: 262px; height: 120px; }
-.pasillo5 { left: 278px; top: 525px; width: 120px; height: 225px; }
-.pasillo6 { left: 990px; top: 525px; width: 120px; height: 225px; }
-.pasillo7 { left: 1740px; top: 525px; width: 120px; height: 225px; }
-
-/* PAREDES ORIGINALES */
-.pared {
-    position: absolute;
-    background: #171717;
-    border: 3px solid #333;
-    z-index: 20;
-}
-
-.p1 { left:75px; top:75px; width:525px; height:21px; }
-.p2 { left:75px; top:504px; width:525px; height:21px; }
-.p3 { left:75px; top:75px; width:21px; height:450px; }
-.p4a { left:579px; top:75px; width:21px; height:165px; }
-.p4b { left:579px; top:360px; width:21px; height:165px; }
-
-.p5 { left:788px; top:75px; width:525px; height:21px; }
-.p6 { left:788px; top:504px; width:525px; height:21px; }
-.p7a { left:788px; top:75px; width:21px; height:165px; }
-.p7b { left:788px; top:360px; width:21px; height:165px; }
-.p8a { left:1292px; top:75px; width:21px; height:165px; }
-.p8b { left:1292px; top:360px; width:21px; height:165px; }
-
-.p9 { left:1575px; top:75px; width:450px; height:21px; }
-.p10 { left:1575px; top:504px; width:450px; height:21px; }
-.p11a { left:1575px; top:75px; width:21px; height:165px; }
-.p11b { left:1575px; top:360px; width:21px; height:165px; }
-.p12 { left:2004px; top:75px; width:21px; height:450px; }
-
-.p13 { left:75px; top:750px; width:525px; height:21px; }
-.p14 { left:75px; top:1254px; width:525px; height:21px; }
-.p15 { left:75px; top:750px; width:21px; height:525px; }
-.p16a { left:579px; top:750px; width:21px; height:165px; }
-.p16b { left:579px; top:1035px; width:21px; height:240px; }
-
-.p17 { left:788px; top:750px; width:525px; height:21px; }
-.p18 { left:788px; top:1254px; width:525px; height:21px; }
-.p19a { left:788px; top:750px; width:21px; height:165px; }
-.p19b { left:788px; top:1035px; width:21px; height:240px; }
-.p20a { left:1292px; top:750px; width:21px; height:165px; }
-.p20b { left:1292px; top:1035px; width:21px; height:240px; }
-
-.p21 { left:1575px; top:750px; width:450px; height:21px; }
-.p22 { left:1575px; top:1254px; width:450px; height:21px; }
-.p23a { left:1575px; top:750px; width:21px; height:165px; }
-.p23b { left:1575px; top:1035px; width:21px; height:240px; }
-.p24 { left:2004px; top:750px; width:21px; height:525px; }
-
-/* PUERTAS ORIGINALES */
-.puerta {
-    position: absolute;
-    background: #b8793c;
-    border: 3px solid #633a1d;
-    z-index: 30;
-}
-
-.puerta-horizontal { width:120px; height:21px; }
-.puerta-vertical { width:21px; height:120px; }
-
-.nombreHabitacion {
-    position: absolute;
-    left: 30px;
-    top: 30px;
-    padding: 10px 15px;
-    background: rgba(0,0,0,.65);
-    border-radius: 9px;
-    font-weight: bold;
-    z-index: 10;
-}
-
-/* DECORACIÓN ORIGINAL */
-.mesa {
-    position: absolute;
-    width: 135px;
-    height: 82px;
-    background: #75451f;
-    border: 8px solid #48260e;
-    border-radius: 15px;
-    z-index: 5;
-}
-
-.alfombra {
-    position: absolute;
-    width: 225px;
-    height: 150px;
-    background: #914b52;
-    border: 8px solid #633238;
-    border-radius: 22px;
-    z-index: 3;
-}
-
-/* JUGADORES */
-.jugador {
-    position: absolute;
-    width: 50px;
-    height: 65px;
-    transform: translate(-50%, -50%);
-    z-index: 100;
+    inset: 12px;
+    border: 2px dashed rgba(255,255,255,.12);
     pointer-events: none;
 }
+#habitacion1 { left:50px; top:50px; }
+#habitacion2 { left:550px; top:50px; }
+#habitacion3 { left:1050px; top:50px; }
+#habitacion4 { left:50px; top:450px; }
+#habitacion5 { left:550px; top:450px; }
+#habitacion6 { left:1050px; top:450px; }
+#habitacion7 { left:50px; top:850px; }
+#habitacion8 { left:550px; top:850px; }
+#habitacion9 { left:1050px; top:850px; }
 
-.cabeza {
+/* Pasillos */
+.pasillo {
     position: absolute;
-    width: 27px;
-    height: 27px;
-    left: 50%;
-    top: 0;
-    transform: translateX(-50%);
-    background: #f1c27d;
-    border: 2px solid #222;
-    border-radius: 50%;
+    background: #666;
+    z-index: 1;
+}
+.pasillo-horizontal {
+    width: 150px;
+    height: 90px;
+}
+.pasillo-vertical {
+    width: 90px;
+    height: 100px;
+}
+.h1 { left:400px; top:155px; }
+.h2 { left:900px; top:155px; }
+.h3 { left:400px; top:555px; }
+.h4 { left:900px; top:555px; }
+.h5 { left:400px; top:955px; }
+.h6 { left:900px; top:955px; }
+.v1 { left:180px; top:350px; }
+.v2 { left:680px; top:350px; }
+.v3 { left:1180px; top:350px; }
+.v4 { left:180px; top:750px; }
+.v5 { left:680px; top:750px; }
+.v6 { left:1180px; top:750px; }
+
+/* Puertas visibles */
+.puerta {
+    position: absolute;
     z-index: 3;
+    background: #b58b50;
+    border: 3px solid #4b3218;
 }
+.puerta-h {
+    width: 55px;
+    height: 12px;
+}
+.puerta-v {
+    width: 12px;
+    height: 55px;
+}
+.ph1 { left:445px; top:194px; }
+.ph2 { left:945px; top:194px; }
+.ph3 { left:445px; top:594px; }
+.ph4 { left:945px; top:594px; }
+.ph5 { left:445px; top:994px; }
+.ph6 { left:945px; top:994px; }
+.pv1 { left:219px; top:372px; }
+.pv2 { left:719px; top:372px; }
+.pv3 { left:1219px; top:372px; }
+.pv4 { left:219px; top:772px; }
+.pv5 { left:719px; top:772px; }
+.pv6 { left:1219px; top:772px; }
 
-.pelo {
+.jugador {
     position: absolute;
-    width: 29px;
-    height: 13px;
-    left: 50%;
-    top: -2px;
-    transform: translateX(-50%);
-    background: #222;
-    border-radius: 50% 50% 30% 30%;
-    z-index: 4;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 3px solid white;
+    z-index: 10;
+    transform: translate(-50%, -50%);
 }
+.jugador.propio { border: 3px solid #ffe600; }
+.jugador.buscador { background: #e53935; }
+.jugador.escondido { background: #2196f3; }
+.jugador.atrapado { background: #777; opacity: .5; }
 
-.cuerpo {
-    position: absolute;
-    width: 32px;
-    height: 29px;
-    left: 50%;
-    top: 25px;
-    transform: translateX(-50%);
-    border-radius: 8px;
-    border: 2px solid #111;
-}
-
-.brazo {
-    position: absolute;
-    width: 9px;
-    height: 25px;
-    top: 27px;
-    background: #f1c27d;
-    border: 2px solid #222;
-    border-radius: 5px;
-}
-
-.brazo-izquierdo { left: 2px; }
-.brazo-derecho { right: 2px; }
-
-.pierna {
-    position: absolute;
-    width: 10px;
-    height: 18px;
-    top: 51px;
-    background: #222;
-    border-radius: 4px;
-}
-
-.pierna-izquierda { left: 14px; }
-.pierna-derecha { right: 14px; }
-
-.jugador1 .cuerpo { background: #3498db; }
-.otroJugador .cuerpo { background: #e74c3c; }
-
-.nombreJugador {
-    position: absolute;
-    top: -25px;
-    left: 50%;
-    transform: translateX(-50%);
-    white-space: nowrap;
-    padding: 3px 6px;
-    background: rgba(0,0,0,.75);
-    border-radius: 4px;
-    font-size: 11px;
-}
-
-#habitacionActual {
+#minimapa {
     position: fixed;
-    right: 20px;
-    bottom: 20px;
-    z-index: 1000;
-    padding: 10px 15px;
+    z-index: 110;
+    right: 15px;
+    bottom: 15px;
+    width: 190px;
+    height: 155px;
     background: rgba(0,0,0,.85);
     border: 2px solid white;
     border-radius: 8px;
-    font-weight: bold;
 }
+#minimapa canvas { width: 100%; height: 100%; }
 
-/* HUD DEL ESCONDITE */
-#hudEscondite {
+#estado {
     position: fixed;
-    top: 15px;
+    z-index: 110;
+    left: 15px;
+    bottom: 15px;
+    background: rgba(0,0,0,.8);
+    padding: 10px 14px;
+    border-radius: 7px;
+}
+#controles {
+    position: fixed;
+    z-index: 110;
+    left: 15px;
+    top: 80px;
+    background: rgba(0,0,0,.7);
+    padding: 9px;
+    border-radius: 7px;
+    font-size: 13px;
+}
+#mensajePartida {
+    position: fixed;
+    z-index: 120;
+    top: 75px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 3000;
-    min-width: 330px;
-    max-width: calc(100vw - 30px);
-    padding: 12px 18px;
+    background: rgba(0,0,0,.8);
+    padding: 10px 18px;
+    border-radius: 8px;
     text-align: center;
-    background: rgba(0,0,0,.9);
-    border: 2px solid #fff;
-    border-radius: 12px;
-    box-shadow: 0 0 18px rgba(0,0,0,.65);
-    pointer-events: none;
 }
-
-#fasePartida {
-    font-size: 22px;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-#temporizadorPartida {
-    margin-top: 4px;
-    font-size: 30px;
-    font-weight: bold;
-}
-
-#rolPartida { margin-top: 3px; font-size: 14px; }
-#mensajePartida { margin-top: 5px; font-size: 13px; }
-
-#overlayPartida {
-    position: fixed;
+#camara.vision-limitada::after {
+    content: "";
+    position: absolute;
+    z-index: 50;
     inset: 0;
-    z-index: 4000;
+    pointer-events: none;
+    background: radial-gradient(
+        circle 210px at 50% 50%,
+        transparent 0,
+        transparent 115px,
+        rgba(0,0,0,.88) 190px,
+        #000 240px
+    );
+}
+#pantallaNegra {
     display: none;
+    position: fixed;
+    z-index: 80;
+    inset: 65px 0 0;
+    background: #000;
     align-items: center;
     justify-content: center;
-    background: rgba(0,0,0,.78);
-}
-
-#panelResultado {
-    width: min(460px, calc(100vw - 30px));
-    padding: 30px;
     text-align: center;
-    background: #111;
-    border: 3px solid white;
-    border-radius: 18px;
-    box-shadow: 0 0 30px rgba(0,0,0,.8);
+    font-size: 28px;
 }
+#pantallaNegra.activa { display: flex; }
 
-#panelResultado h2 { margin: 0 0 12px; font-size: 32px; }
-#panelResultado p { margin: 8px 0 20px; font-size: 17px; }
-
-#volverMenu {
-    padding: 12px 22px;
-    border: 0;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 16px;
+#resultado {
+    display: none;
+    position: fixed;
+    z-index: 200;
+    inset: 0;
+    background: rgba(0,0,0,.9);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
 }
+#resultado.activo { display: flex; }
+#resultado h1 { font-size: 42px; color: #ffcc00; }
+#resultado button { width: 220px; }
 
-.jugador.atrapado {
-    filter: grayscale(1);
-    opacity: .65;
-}
-
-#musicaPartida { display: none; }
-
-/* PANTALLA NEGRA DEL BUSCADOR MIENTRAS CUENTA */
-#camara.buscador-contando {
-    background: #000;
-}
-
-#camara.buscador-contando #mapa {
-    visibility: hidden;
-}
-
-@media (max-width: 600px) {
-    #hudEscondite {
-        min-width: 0;
-        width: calc(100% - 20px);
-    }
+@media(max-width:650px) {
+    #minimapa { width: 140px; height: 115px; }
+    #controles { font-size: 11px; }
 }
 </style>
 </head>
 
 <body>
-
-<!-- MENU ORIGINAL -->
 <div id="menu">
-    <h1>🎮 Juego Online</h1>
-
-    <h2>Crear sala</h2>
-    <button id="crearSala">Crear sala</button>
-
-    <hr>
-
-    <h2>Unirse</h2>
+    <h1>ESCONDITE ONLINE</h1>
+    <p>Se necesitan 4 jugadores para comenzar.</p>
+    <button id="crearSala">CREAR SALA</button>
     <input id="codigoInput" maxlength="5" placeholder="Código de sala">
-    <button id="unirseSala">Unirse a sala</button>
-
+    <button id="unirseSala">UNIRSE A UNA SALA</button>
     <p id="mensaje"></p>
 </div>
 
-<!-- JUEGO -->
 <div id="juego">
-
-    <div id="hudEscondite">
-        <div id="fasePartida">ESPERANDO JUGADORES</div>
-        <div id="temporizadorPartida">--</div>
-        <div id="rolPartida">Esperando que se conecten 4 jugadores...</div>
-        <div id="mensajePartida"></div>
-    </div>
-
-    <audio id="musicaPartida" loop preload="auto"></audio>
-
-    <div id="overlayPartida">
-        <div id="panelResultado">
-            <h2 id="tituloResultado">Fin de la partida</h2>
-            <p id="textoResultado"></p>
-            <button id="volverMenu" type="button">VOLVER AL MENÚ</button>
-        </div>
-    </div>
-
     <div id="informacion">
-        <h2>Sala: <span id="codigoSala"></span></h2>
-        <p>Jugadores: <span id="cantidadJugadores">0</span>/4</p>
-        <p>Usá W A S D para moverte</p>
+        <div>CÓDIGO: <strong id="codigoSala">-----</strong></div>
+        <div id="temporizadorPartida">Esperando...</div>
     </div>
 
     <div id="camara">
         <div id="mapa">
+            <div class="pasillo pasillo-horizontal h1"></div>
+            <div class="pasillo pasillo-horizontal h2"></div>
+            <div class="pasillo pasillo-horizontal h3"></div>
+            <div class="pasillo pasillo-horizontal h4"></div>
+            <div class="pasillo pasillo-horizontal h5"></div>
+            <div class="pasillo pasillo-horizontal h6"></div>
 
-            <!-- HABITACION 1 -->
-            <div id="habitacion1" class="habitacion">
-                <div class="nombreHabitacion">🛋️ Sala de estar</div>
-                <div class="mesa" style="left:150px; top:195px;"></div>
-                <div class="alfombra" style="left:255px; top:255px;"></div>
-            </div>
+            <div class="pasillo pasillo-vertical v1"></div>
+            <div class="pasillo pasillo-vertical v2"></div>
+            <div class="pasillo pasillo-vertical v3"></div>
+            <div class="pasillo pasillo-vertical v4"></div>
+            <div class="pasillo pasillo-vertical v5"></div>
+            <div class="pasillo pasillo-vertical v6"></div>
 
-            <!-- HABITACION 2 -->
-            <div id="habitacion2" class="habitacion">
-                <div class="nombreHabitacion">🍳 Cocina</div>
-                <div class="mesa" style="left:180px; top:195px;"></div>
-            </div>
+            <div id="habitacion1" class="habitacion"></div>
+            <div id="habitacion2" class="habitacion"></div>
+            <div id="habitacion3" class="habitacion"></div>
+            <div id="habitacion4" class="habitacion"></div>
+            <div id="habitacion5" class="habitacion"></div>
+            <div id="habitacion6" class="habitacion"></div>
+            <div id="habitacion7" class="habitacion"></div>
+            <div id="habitacion8" class="habitacion"></div>
+            <div id="habitacion9" class="habitacion"></div>
 
-            <!-- HABITACION 3 -->
-            <div id="habitacion3" class="habitacion">
-                <div class="nombreHabitacion">🛏️ Dormitorio</div>
-                <div class="alfombra" style="left:105px; top:180px;"></div>
-            </div>
-
-            <!-- HABITACION 4 -->
-            <div id="habitacion4" class="habitacion">
-                <div class="nombreHabitacion">📚 Biblioteca</div>
-                <div class="mesa" style="left:150px; top:195px;"></div>
-            </div>
-
-            <!-- HABITACION 5 -->
-            <div id="habitacion5" class="habitacion">
-                <div class="nombreHabitacion">⭐ Sala central</div>
-                <div class="alfombra" style="left:150px; top:180px;"></div>
-                <div class="mesa" style="left:195px; top:218px;"></div>
-            </div>
-
-            <!-- HABITACION 6 -->
-            <div id="habitacion6" class="habitacion">
-                <div class="nombreHabitacion">🎮 Sala de juegos</div>
-                <div class="mesa" style="left:150px; top:180px;"></div>
-            </div>
-
-            <!-- PASILLOS -->
-            <div class="pasillo pasillo1"></div>
-            <div class="pasillo pasillo2"></div>
-            <div class="pasillo pasillo3"></div>
-            <div class="pasillo pasillo4"></div>
-            <div class="pasillo pasillo5"></div>
-            <div class="pasillo pasillo6"></div>
-            <div class="pasillo pasillo7"></div>
-
-            <!-- PAREDES -->
-            <div class="pared p1"></div>
-            <div class="pared p2"></div>
-            <div class="pared p3"></div>
-            <div class="pared p4a"></div>
-            <div class="pared p4b"></div>
-
-            <div class="pared p5"></div>
-            <div class="pared p6"></div>
-            <div class="pared p7a"></div>
-            <div class="pared p7b"></div>
-            <div class="pared p8a"></div>
-            <div class="pared p8b"></div>
-
-            <div class="pared p9"></div>
-            <div class="pared p10"></div>
-            <div class="pared p11a"></div>
-            <div class="pared p11b"></div>
-            <div class="pared p12"></div>
-
-            <div class="pared p13"></div>
-            <div class="pared p14"></div>
-            <div class="pared p15"></div>
-            <div class="pared p16a"></div>
-            <div class="pared p16b"></div>
-
-            <div class="pared p17"></div>
-            <div class="pared p18"></div>
-            <div class="pared p19a"></div>
-            <div class="pared p19b"></div>
-            <div class="pared p20a"></div>
-            <div class="pared p20b"></div>
-
-            <div class="pared p21"></div>
-            <div class="pared p22"></div>
-            <div class="pared p23a"></div>
-            <div class="pared p23b"></div>
-            <div class="pared p24"></div>
-
-            <!-- PUERTAS HORIZONTALES -->
-            <div class="puerta puerta-horizontal" style="left:338px; top:504px;"></div>
-            <div class="puerta puerta-horizontal" style="left:960px; top:504px;"></div>
-            <div class="puerta puerta-horizontal" style="left:1725px; top:504px;"></div>
-            <div class="puerta puerta-horizontal" style="left:338px; top:750px;"></div>
-            <div class="puerta puerta-horizontal" style="left:960px; top:750px;"></div>
-            <div class="puerta puerta-horizontal" style="left:1725px; top:750px;"></div>
-
-            <!-- PUERTAS VERTICALES -->
-            <div class="puerta puerta-vertical" style="left:579px; top:262px;"></div>
-            <div class="puerta puerta-vertical" style="left:788px; top:262px;"></div>
-            <div class="puerta puerta-vertical" style="left:1292px; top:262px;"></div>
-            <div class="puerta puerta-vertical" style="left:1575px; top:262px;"></div>
-            <div class="puerta puerta-vertical" style="left:579px; top:938px;"></div>
-            <div class="puerta puerta-vertical" style="left:788px; top:938px;"></div>
-            <div class="puerta puerta-vertical" style="left:1292px; top:938px;"></div>
-            <div class="puerta puerta-vertical" style="left:1575px; top:938px;"></div>
-
+            <div class="puerta puerta-h ph1"></div>
+            <div class="puerta puerta-h ph2"></div>
+            <div class="puerta puerta-h ph3"></div>
+            <div class="puerta puerta-h ph4"></div>
+            <div class="puerta puerta-h ph5"></div>
+            <div class="puerta puerta-h ph6"></div>
+            <div class="puerta puerta-v pv1"></div>
+            <div class="puerta puerta-v pv2"></div>
+            <div class="puerta puerta-v pv3"></div>
+            <div class="puerta puerta-v pv4"></div>
+            <div class="puerta puerta-v pv5"></div>
+            <div class="puerta puerta-v pv6"></div>
         </div>
     </div>
 
-    <div id="habitacionActual">Pasillo</div>
+    <div id="controles">
+        <b>CONTROLES</b><br>
+        WASD o flechas: moverse<br>
+        Acercate al buscador para que te encuentre
+    </div>
+
+    <div id="mensajePartida">Esperando jugadores...</div>
+    <div id="estado">Rol: esperando</div>
+    <div id="minimapa"><canvas id="canvasMini" width="380" height="310"></canvas></div>
+    <div id="pantallaNegra"><div>ESTÁS CONTANDO<br><span id="cuentaTexto">15</span></div></div>
+
+    <div id="resultado">
+        <h1 id="tituloResultado">FIN DE LA PARTIDA</h1>
+        <p id="textoResultado"></p>
+        <button id="volverMenu">VOLVER AL MENÚ</button>
+    </div>
 </div>
 
-<script src="/socket.io/socket.io.js"></script>
+<audio id="musicaPartida" loop></audio>
+
 <script>
 const socket = io();
 
-/* ELEMENTOS */
 const menu = document.getElementById("menu");
 const juego = document.getElementById("juego");
-const crearSala = document.getElementById("crearSala");
-const unirseSala = document.getElementById("unirseSala");
-const codigoInput = document.getElementById("codigoInput");
-const codigoSala = document.getElementById("codigoSala");
-const cantidadJugadores = document.getElementById("cantidadJugadores");
+const mensaje = document.getElementById("mensaje");
 const mapa = document.getElementById("mapa");
 const camara = document.getElementById("camara");
-const mensaje = document.getElementById("mensaje");
-const habitacionActual = document.getElementById("habitacionActual");
-
-const fasePartida = document.getElementById("fasePartida");
-const temporizadorPartida = document.getElementById("temporizadorPartida");
-const rolPartida = document.getElementById("rolPartida");
+const temporizador = document.getElementById("temporizadorPartida");
 const mensajePartida = document.getElementById("mensajePartida");
-const overlayPartida = document.getElementById("overlayPartida");
-const tituloResultado = document.getElementById("tituloResultado");
-const textoResultado = document.getElementById("textoResultado");
-const volverMenu = document.getElementById("volverMenu");
-const musicaPartida = document.getElementById("musicaPartida");
-
-/* JUGADOR LOCAL */
-let miId = null;
-let posicionInicialRecibida = false;
-let miJugador = { x: 700, y: 450 };
-let jugadoresActuales = [];
-let cantidadJugadoresSala = 0;
-let miRol = "esperando";
-let faseActual = "esperando";
-let partidaTerminada = false;
-
-const ESCALA_MAPA = 1.5;
-const RADIO_JUGADOR = 27;
-const teclas = Object.create(null);
-const teclasMovimiento = new Set(["w", "a", "s", "d"]);
-const elementosJugadores = new Map();
+const estado = document.getElementById("estado");
+const pantallaNegra = document.getElementById("pantallaNegra");
+const cuentaTexto = document.getElementById("cuentaTexto");
+const resultado = document.getElementById("resultado");
+const canvas = document.getElementById("canvasMini");
+const ctx = canvas.getContext("2d");
+const musica = document.getElementById("musicaPartida");
 
 const canciones = [
     "/img/gd1.mp3",
@@ -628,532 +366,295 @@ const canciones = [
     "/img/gd4.mp3"
 ];
 
-let indiceCancionActual = -1;
+let miId = null;
+let codigoSala = null;
+let jugadores = [];
+let miRol = "";
+let fase = "esperando";
+let miX = 0;
+let miY = 0;
+let teclas = {};
+let ultimoEnvio = 0;
+let resultadoMostrado = false;
 
-/* CONEXIÓN */
-socket.on("connect", () => {
-    miId = socket.id;
-});
+const MAPA = { ancho: 1450, alto: 1200 };
 
-/* CREAR SALA */
-crearSala.addEventListener("click", () => {
+document.getElementById("crearSala").onclick = () => {
     socket.emit("crearSala");
-});
-
-/* UNIRSE A SALA */
-unirseSala.addEventListener("click", () => {
-    const codigo = codigoInput.value.trim().toUpperCase();
-
-    if (codigo === "") {
-        mensaje.textContent = "Escribí un código.";
+};
+document.getElementById("unirseSala").onclick = () => {
+    const codigo = document.getElementById("codigoInput").value.trim().toUpperCase();
+    if (!codigo) {
+        mensaje.textContent = "Ingresá un código.";
         return;
     }
-
     socket.emit("unirseSala", codigo);
-});
+};
 
-codigoInput.addEventListener("keydown", evento => {
-    if (evento.key === "Enter") unirseSala.click();
-});
+socket.on("connect", () => { miId = socket.id; });
 
-/* ENTRAR AL JUEGO */
-socket.on("salaCreada", entrarAlJuego);
-socket.on("salaUnida", entrarAlJuego);
-
-function entrarAlJuego(datos) {
-    menu.style.display = "none";
-    juego.style.display = "block";
-
-    posicionInicialRecibida = false;
-    partidaTerminada = false;
-    overlayPartida.style.display = "none";
-
-    if (datos.codigo) codigoSala.textContent = datos.codigo;
-
-    if (datos.jugadores !== undefined) {
-        cantidadJugadoresSala = datos.jugadores;
-        cantidadJugadores.textContent = datos.jugadores;
-    }
-
-    actualizarCamara();
-}
-
-/* ESTADO DE LA PARTIDA */
-socket.on("estadoPartida", estado => {
-    if (!estado) return;
-
-    faseActual = estado.fase || "esperando";
-    miRol = estado.miRol || "esperando";
-
-    if (estado.jugadores !== undefined) {
-        cantidadJugadoresSala = estado.jugadores;
-        cantidadJugadores.textContent = estado.jugadores;
-    }
-
-    actualizarHUD(estado);
-
-    if (estado.fase === "fin") {
-        mostrarResultado(estado);
-    }
-});
-
-function actualizarHUD(estado) {
-    const tiempo = Number.isFinite(estado.tiempo)
-        ? Math.max(0, Math.ceil(estado.tiempo))
-        : 0;
-
-    temporizadorPartida.textContent =
-        estado.fase === "esperando" ? "--" : tiempo;
-
-    if (estado.fase === "cuenta") {
-        fasePartida.textContent = "EL BUSCADOR CUENTA";
-
-        rolPartida.textContent = miRol === "buscador"
-            ? "Sos el BUSCADOR. No podés moverte todavía."
-            : "Sos ESCONDIDO. ¡Buscá un lugar para esconderte!";
-
-        mensajePartida.textContent = "El buscador está contando...";
-    }
-    else if (estado.fase === "busqueda") {
-        fasePartida.textContent = "¡A BUSCAR!";
-
-        rolPartida.textContent = miRol === "buscador"
-            ? "Sos el BUSCADOR. Encontrá a los demás."
-            : "Sos ESCONDIDO. ¡No dejes que te encuentren!";
-
-        mensajePartida.textContent = "El buscador tiene una vista más reducida.";
-    }
-    else if (estado.fase === "fin") {
-        fasePartida.textContent = "PARTIDA TERMINADA";
-    }
-    else {
-        fasePartida.textContent = "ESPERANDO JUGADORES";
-        rolPartida.textContent =
-            "Se necesitan 4 jugadores para comenzar.";
-        mensajePartida.textContent =
-            "Jugadores conectados: " + cantidadJugadoresSala + "/4";
-    }
-
-    actualizarCamara();
-}
-
-/* MÚSICA */
-socket.on("musicaPartida", datos => {
-    if (!datos || !Number.isInteger(datos.indice)) return;
-
-    const indice = datos.indice % canciones.length;
-    if (indice === indiceCancionActual) return;
-
-    indiceCancionActual = indice;
-    musicaPartida.src = canciones[indice];
-    musicaPartida.currentTime = 0;
-
-    const promesa = musicaPartida.play();
-
-    if (promesa && typeof promesa.catch === "function") {
-        promesa.catch(() => {
-            console.log("El navegador bloqueó la reproducción automática.");
-        });
-    }
-});
-
-function detenerMusica() {
-    musicaPartida.pause();
-    musicaPartida.currentTime = 0;
-}
-
-/* JUGADORES RECIBIDOS */
-socket.on("actualizarJugadores", jugadores => {
-    jugadoresActuales = Array.isArray(jugadores) ? jugadores : [];
-    actualizarJugadoresDOM();
-});
-
-function actualizarJugadoresDOM() {
-    const idsVisibles = new Set();
-
-    jugadoresActuales.forEach((jugador, indice) => {
-        idsVisibles.add(jugador.id);
-
-        let elemento = elementosJugadores.get(jugador.id);
-
-        if (!elemento) {
-            elemento = crearElementoJugador(jugador, indice);
-            elementosJugadores.set(jugador.id, elemento);
-            mapa.appendChild(elemento);
-        }
-
-        const esYo = jugador.id === miId;
-
-        if (esYo && !posicionInicialRecibida) {
-            miJugador.x = jugador.x;
-            miJugador.y = jugador.y;
-            posicionInicialRecibida = true;
-        }
-
-        elemento.classList.toggle("jugador1", esYo);
-        elemento.classList.toggle("otroJugador", !esYo);
-        elemento.classList.toggle("atrapado", jugador.atrapado === true);
-
-        const nombre = elemento.querySelector(".nombreJugador");
-
-        if (nombre) {
-            nombre.textContent = esYo
-                ? "YO"
-                : (jugador.rol === "buscador"
-                    ? "BUSCADOR"
-                    : "Jugador " + (indice + 1));
-        }
-
-        if (!esYo) {
-            elemento.style.left = jugador.x + "px";
-            elemento.style.top = jugador.y + "px";
-        }
-    });
-
-    for (const [id, elemento] of elementosJugadores.entries()) {
-        if (!idsVisibles.has(id)) {
-            elemento.remove();
-            elementosJugadores.delete(id);
-        }
-    }
-
-    renderizarJugadorLocal();
-}
-
-function crearElementoJugador(jugador, indice) {
-    const elemento = document.createElement("div");
-    elemento.className = "jugador";
-
-    const cabeza = document.createElement("div");
-    cabeza.className = "cabeza";
-
-    const pelo = document.createElement("div");
-    pelo.className = "pelo";
-
-    const cuerpo = document.createElement("div");
-    cuerpo.className = "cuerpo";
-
-    const brazo1 = document.createElement("div");
-    brazo1.className = "brazo brazo-izquierdo";
-
-    const brazo2 = document.createElement("div");
-    brazo2.className = "brazo brazo-derecho";
-
-    const pierna1 = document.createElement("div");
-    pierna1.className = "pierna pierna-izquierda";
-
-    const pierna2 = document.createElement("div");
-    pierna2.className = "pierna pierna-derecha";
-
-    const nombre = document.createElement("div");
-    nombre.className = "nombreJugador";
-    nombre.textContent = jugador.id === miId
-        ? "YO"
-        : "Jugador " + (indice + 1);
-
-    elemento.append(
-        cabeza, pelo, cuerpo,
-        brazo1, brazo2, pierna1, pierna2, nombre
-    );
-
-    elemento.style.left = jugador.x + "px";
-    elemento.style.top = jugador.y + "px";
-
-    return elemento;
-}
-
-function renderizarJugadorLocal() {
-    const elemento = elementosJugadores.get(miId);
-    if (!elemento) return;
-
-    elemento.style.left = miJugador.x + "px";
-    elemento.style.top = miJugador.y + "px";
-}
-
-/* ERRORES */
 socket.on("errorSala", texto => {
     mensaje.textContent = texto;
 });
 
-/* TECLADO */
-document.addEventListener("keydown", evento => {
-    const tecla = evento.key.toLowerCase();
+socket.on("salaCreada", codigo => entrarAlJuego(codigo));
+socket.on("unidoSala", codigo => entrarAlJuego(codigo));
 
-    if (teclasMovimiento.has(tecla)) {
-        evento.preventDefault();
-        teclas[tecla] = true;
+function entrarAlJuego(codigo) {
+    codigoSala = codigo;
+    document.getElementById("codigoSala").textContent = codigo;
+    menu.style.display = "none";
+    juego.style.display = "block";
+    mensajePartida.textContent = "Esperando a los otros jugadores...";
+}
+
+socket.on("estadoSala", datos => {
+    jugadores = datos.jugadores || [];
+    fase = datos.fase;
+    miRol = datos.roles?.[miId] || miRol;
+
+    const yo = jugadores.find(j => j.id === miId);
+    if (yo) {
+        miX = yo.x;
+        miY = yo.y;
     }
+
+    actualizarInterfaz(datos);
+    dibujarJugadores();
+    dibujarMinimapa();
 });
 
-document.addEventListener("keyup", evento => {
-    const tecla = evento.key.toLowerCase();
-
-    if (teclasMovimiento.has(tecla)) {
-        evento.preventDefault();
-        teclas[tecla] = false;
-    }
+socket.on("inicioCuenta", datos => {
+    fase = "contando";
+    miRol = datos.roles?.[miId] || miRol;
+    mensajePartida.textContent = miRol === "buscador"
+        ? "¡Contá! Los demás se están escondiendo."
+        : "¡Escondete! El buscador está contando.";
+    actualizarPantallaCuenta(datos.segundos);
 });
 
-window.addEventListener("blur", () => {
-    for (const tecla of teclasMovimiento) {
-        teclas[tecla] = false;
-    }
+socket.on("cuentaActualizada", datos => {
+    if (miRol === "buscador") cuentaTexto.textContent = datos.segundos;
+    temporizador.textContent = "Cuenta: " + datos.segundos;
 });
 
-/* RECTÁNGULOS */
-function rect(x, y, ancho, alto) {
-    return { x, y, ancho, alto };
-}
+socket.on("finCuenta", () => {
+    fase = "buscando";
+    pantallaNegra.classList.remove("activa");
+    camara.classList.toggle("vision-limitada", miRol === "buscador");
+    mensajePartida.textContent = miRol === "buscador"
+        ? "¡Buscá a los jugadores escondidos!"
+        : "¡No dejes que te encuentren!";
+});
 
-/* PAREDES: SON LAS MISMAS DEL MAPA ORIGINAL */
-const paredes = [
-    rect(50, 50, 350, 14),
-    rect(50, 336, 350, 14),
-    rect(50, 50, 14, 300),
-    rect(386, 50, 14, 110),
-    rect(386, 240, 14, 110),
+socket.on("tiempoActualizado", datos => {
+    temporizador.textContent = "Tiempo: " + datos.segundos + "s";
+});
 
-    rect(525, 50, 350, 14),
-    rect(525, 336, 350, 14),
-    rect(525, 50, 14, 110),
-    rect(525, 240, 14, 110),
-    rect(861, 50, 14, 110),
-    rect(861, 240, 14, 110),
+socket.on("jugadorAtrapado", datos => {
+    mensajePartida.textContent = datos.nombre + " fue encontrado.";
+});
 
-    rect(1050, 50, 300, 14),
-    rect(1050, 336, 300, 14),
-    rect(1050, 50, 14, 110),
-    rect(1050, 240, 14, 110),
-    rect(1336, 50, 14, 300),
+socket.on("finPartida", datos => {
+    fase = "terminada";
+    pantallaNegra.classList.remove("activa");
+    musica.pause();
+    document.getElementById("tituloResultado").textContent = datos.titulo;
+    document.getElementById("textoResultado").textContent = datos.mensaje;
+    resultado.classList.add("activo");
+});
 
-    rect(50, 500, 350, 14),
-    rect(50, 836, 350, 14),
-    rect(50, 500, 14, 350),
-    rect(386, 500, 14, 110),
-    rect(386, 690, 14, 160),
-
-    rect(525, 500, 350, 14),
-    rect(525, 836, 350, 14),
-    rect(525, 500, 14, 110),
-    rect(525, 690, 14, 160),
-    rect(861, 500, 14, 110),
-    rect(861, 690, 14, 160),
-
-    rect(1050, 500, 300, 14),
-    rect(1050, 836, 300, 14),
-    rect(1050, 500, 14, 110),
-    rect(1050, 690, 14, 160),
-    rect(1336, 500, 14, 350)
-];
-
-for (const pared of paredes) {
-    pared.x *= ESCALA_MAPA;
-    pared.y *= ESCALA_MAPA;
-    pared.ancho *= ESCALA_MAPA;
-    pared.alto *= ESCALA_MAPA;
-}
-
-function colisionaConPared(x, y, pared) {
-    const puntoX = Math.max(
-        pared.x,
-        Math.min(x, pared.x + pared.ancho)
-    );
-
-    const puntoY = Math.max(
-        pared.y,
-        Math.min(y, pared.y + pared.alto)
-    );
-
-    const distanciaX = x - puntoX;
-    const distanciaY = y - puntoY;
-
-    return Math.sqrt(
-        distanciaX * distanciaX +
-        distanciaY * distanciaY
-    ) < RADIO_JUGADOR;
-}
-
-function tocaPared(x, y) {
-    return paredes.some(pared => colisionaConPared(x, y, pared));
-}
-
-/* MOVIMIENTO */
-function moverJugador(nuevoX, nuevoY) {
-    if (!tocaPared(nuevoX, nuevoY)) {
-        miJugador.x = nuevoX;
-        miJugador.y = nuevoY;
-        return;
+function actualizarInterfaz(datos) {
+    if (fase === "esperando") {
+        temporizador.textContent = jugadores.length + "/4 jugadores";
+        mensajePartida.textContent = jugadores.length < 4
+            ? "Esperando jugadores (" + jugadores.length + "/4)"
+            : "Preparando partida...";
     }
 
-    if (!tocaPared(nuevoX, miJugador.y)) {
-        miJugador.x = nuevoX;
+    if (fase === "contando" && miRol === "buscador") {
+        pantallaNegra.classList.add("activa");
+        camara.classList.remove("vision-limitada");
+    } else if (fase !== "contando") {
+        pantallaNegra.classList.remove("activa");
     }
 
-    if (!tocaPared(miJugador.x, nuevoY)) {
-        miJugador.y = nuevoY;
+    if (fase === "buscando") {
+        camara.classList.toggle("vision-limitada", miRol === "buscador");
+    }
+
+    const roles = {
+        buscador: "BUSCADOR",
+        escondido: "ESCONDIDO"
+    };
+    estado.textContent = "Rol: " + (roles[miRol] || "esperando");
+}
+
+function actualizarPantallaCuenta(segundos) {
+    if (miRol === "buscador") {
+        pantallaNegra.classList.add("activa");
+        cuentaTexto.textContent = segundos;
+        camara.classList.remove("vision-limitada");
+    } else {
+        pantallaNegra.classList.remove("activa");
     }
 }
 
-function actualizarMovimiento() {
-    if (juego.style.display === "none") {
-        requestAnimationFrame(actualizarMovimiento);
-        return;
-    }
+function dibujarJugadores() {
+    document.querySelectorAll(".jugador").forEach(e => e.remove());
 
-    const velocidad = 5;
+    jugadores.forEach(j => {
+        if (j.atrapado) return;
+        const el = document.createElement("div");
+        el.className = "jugador " +
+            (j.rol === "buscador" ? "buscador" : "escondido") +
+            (j.id === miId ? " propio" : "");
+        el.style.left = j.x + "px";
+        el.style.top = j.y + "px";
+        el.title = j.nombre || (j.rol === "buscador" ? "Buscador" : "Jugador");
+        mapa.appendChild(el);
+    });
+}
 
-    const fasePermiteMovimiento =
-        faseActual === "cuenta" || faseActual === "busqueda";
+function dibujarMinimapa() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#333";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const buscadorDebeContar =
-        faseActual === "cuenta" && miRol === "buscador";
+    const sx = canvas.width / MAPA.ancho;
+    const sy = canvas.height / MAPA.alto;
 
-    // Se usa la cantidad que informa el servidor, no la cantidad
-    // de jugadores visibles: el buscador no recibe las posiciones ocultas.
-    const puedeMoverse =
-        cantidadJugadoresSala >= 4 &&
-        fasePermiteMovimiento &&
-        !buscadorDebeContar;
-
-    if (puedeMoverse && !partidaTerminada) {
-        let nuevoX = miJugador.x;
-        let nuevoY = miJugador.y;
-
-        if (teclas["w"] && !teclas["s"]) nuevoY -= velocidad;
-        if (teclas["s"] && !teclas["w"]) nuevoY += velocidad;
-        if (teclas["a"] && !teclas["d"]) nuevoX -= velocidad;
-        if (teclas["d"] && !teclas["a"]) nuevoX += velocidad;
-
-        nuevoX = Math.max(
-            RADIO_JUGADOR,
-            Math.min(2100 - RADIO_JUGADOR, nuevoX)
-        );
-
-        nuevoY = Math.max(
-            RADIO_JUGADOR,
-            Math.min(1350 - RADIO_JUGADOR, nuevoY)
-        );
-
-        if (nuevoX !== miJugador.x || nuevoY !== miJugador.y) {
-            moverJugador(nuevoX, nuevoY);
-
-            socket.emit("moverJugador", {
-                x: miJugador.x,
-                y: miJugador.y
-            });
+    ctx.fillStyle = "#888";
+    for (let fila = 0; fila < 3; fila++) {
+        for (let col = 0; col < 3; col++) {
+            ctx.fillRect((50 + col * 500) * sx, (50 + fila * 400) * sy,
+                350 * sx, 300 * sy);
         }
     }
 
-    renderizarJugadorLocal();
-    actualizarCamara();
-    actualizarHabitacion();
+    ctx.fillStyle = "#666";
+    for (let fila = 0; fila < 3; fila++) {
+        ctx.fillRect(400*sx, (155+fila*400)*sy, 150*sx, 90*sy);
+        ctx.fillRect(900*sx, (155+fila*400)*sy, 150*sx, 90*sy);
+    }
+    for (let col = 0; col < 3; col++) {
+        ctx.fillRect((180+col*500)*sx, 350*sy, 90*sx, 100*sy);
+        ctx.fillRect((180+col*500)*sx, 750*sy, 90*sx, 100*sy);
+    }
 
-    requestAnimationFrame(actualizarMovimiento);
+    jugadores.forEach(j => {
+        if (j.atrapado) return;
+
+        // El buscador no aparece en el minimapa de los escondidos.
+        if (miRol === "escondido" && j.rol === "buscador") return;
+
+        ctx.fillStyle = j.rol === "buscador" ? "#f33" : "#28a9ff";
+        ctx.beginPath();
+        ctx.arc(j.x*sx, j.y*sy, 7, 0, Math.PI*2);
+        ctx.fill();
+    });
 }
 
-/* CÁMARA */
-function actualizarCamara() {
-    // El buscador no ve el mapa durante los 15 segundos de cuenta.
-    const buscadorContando =
-        miRol === "buscador" && faseActual === "cuenta";
+function moverCamara() {
+    const ancho = camara.clientWidth;
+    const alto = camara.clientHeight;
+    const x = ancho / 2 - miX;
+    const y = alto / 2 - miY;
+    mapa.style.transform = `translate(${x}px, ${y}px)`;
+}
 
-    camara.classList.toggle("buscador-contando", buscadorContando);
+function dentroDeZona(x, y) {
+    const habitaciones = [
+        [50,50,350,300], [550,50,350,300], [1050,50,350,300],
+        [50,450,350,300], [550,450,350,300], [1050,450,350,300],
+        [50,850,350,300], [550,850,350,300], [1050,850,350,300]
+    ];
+    const pasillosH = [
+        [400,155,150,90], [900,155,150,90],
+        [400,555,150,90], [900,555,150,90],
+        [400,955,150,90], [900,955,150,90]
+    ];
+    const pasillosV = [
+        [180,350,90,100], [680,350,90,100], [1180,350,90,100],
+        [180,750,90,100], [680,750,90,100], [1180,750,90,100]
+    ];
+    return [...habitaciones, ...pasillosH, ...pasillosV].some(z =>
+        x >= z[0]+12 && x <= z[0]+z[2]-12 &&
+        y >= z[1]+12 && y <= z[1]+z[3]-12
+    );
+}
 
-    if (buscadorContando) {
+document.addEventListener("keydown", e => {
+    const tecla = e.key.toLowerCase();
+    if (["arrowup","arrowdown","arrowleft","arrowright"," "].includes(tecla)) e.preventDefault();
+    teclas[tecla] = true;
+
+    if (tecla === " " || tecla === "e") {
+        if (fase === "buscando" && miRol === "buscador") {
+            socket.emit("intentarAtrapar");
+        }
+    }
+});
+document.addEventListener("keyup", e => {
+    teclas[e.key.toLowerCase()] = false;
+});
+window.addEventListener("blur", () => { teclas = {}; });
+
+function bucleMovimiento() {
+    requestAnimationFrame(bucleMovimiento);
+
+    if (fase === "esperando" || fase === "terminada") return;
+    if (miRol === "buscador" && fase === "contando") return;
+
+    let dx = 0, dy = 0;
+    if (teclas["a"] || teclas["arrowleft"]) dx--;
+    if (teclas["d"] || teclas["arrowright"]) dx++;
+    if (teclas["w"] || teclas["arrowup"]) dy--;
+    if (teclas["s"] || teclas["arrowdown"]) dy++;
+
+    if (dx === 0 && dy === 0) {
+        moverCamara();
         return;
     }
 
-    const habitacion = detectarHabitacion();
-    let zoom = habitacion ? 1.35 : 1;
+    const largo = Math.hypot(dx, dy);
+    dx = dx / largo * 3.5;
+    dy = dy / largo * 3.5;
 
-    // Vista reducida del buscador durante la búsqueda.
-    if (miRol === "buscador" && faseActual === "busqueda") {
-        zoom = 2;
+    const nuevoX = miX + dx;
+    const nuevoY = miY + dy;
+
+    if (dentroDeZona(nuevoX, miY)) miX = nuevoX;
+    if (dentroDeZona(miX, nuevoY)) miY = nuevoY;
+
+    moverCamara();
+
+    const ahora = Date.now();
+    if (ahora - ultimoEnvio > 45) {
+        socket.emit("moverJugador", { x: miX, y: miY });
+        ultimoEnvio = ahora;
     }
-
-    const centroX = camara.clientWidth / 2;
-    const centroY = camara.clientHeight / 2;
-
-    let izquierda = centroX - miJugador.x * zoom;
-    let arriba = centroY - miJugador.y * zoom;
-
-    const anchoMapa = 2100 * zoom;
-    const altoMapa = 1350 * zoom;
-
-    izquierda = Math.min(
-        0,
-        Math.max(camara.clientWidth - anchoMapa, izquierda)
-    );
-
-    arriba = Math.min(
-        0,
-        Math.max(camara.clientHeight - altoMapa, arriba)
-    );
-
-    mapa.style.left = izquierda + "px";
-    mapa.style.top = arriba + "px";
-    mapa.style.transform = `scale(${zoom})`;
 }
 
-/* HABITACIÓN ACTUAL */
-function detectarHabitacion() {
-    const x = miJugador.x / ESCALA_MAPA;
-    const y = miJugador.y / ESCALA_MAPA;
+bucleMovimiento();
 
-    if (x >= 64 && x <= 386 && y >= 64 && y <= 336)
-        return "Sala de estar";
-
-    if (x >= 539 && x <= 861 && y >= 64 && y <= 336)
-        return "Cocina";
-
-    if (x >= 1064 && x <= 1336 && y >= 64 && y <= 336)
-        return "Dormitorio";
-
-    if (x >= 64 && x <= 386 && y >= 514 && y <= 836)
-        return "Biblioteca";
-
-    if (x >= 539 && x <= 861 && y >= 514 && y <= 836)
-        return "Sala central";
-
-    if (x >= 1064 && x <= 1336 && y >= 514 && y <= 836)
-        return "Sala de juegos";
-
-    return null;
-}
-
-function actualizarHabitacion() {
-    const habitacion = detectarHabitacion();
-
-    habitacionActual.textContent = habitacion
-        ? "Habitación: " + habitacion
-        : "Pasillo";
-}
-
-/* RESULTADO */
-function mostrarResultado(estado) {
-    if (partidaTerminada) return;
-
-    partidaTerminada = true;
-    detenerMusica();
-
-    tituloResultado.textContent =
-        estado.ganador === "buscador"
-            ? "¡EL BUSCADOR GANÓ!"
-            : "¡LOS ESCONDIDOS GANARON!";
-
-    textoResultado.textContent =
-        estado.mensajeFinal || "La partida terminó.";
-
-    overlayPartida.style.display = "flex";
-}
-
-volverMenu.addEventListener("click", () => {
+document.getElementById("volverMenu").onclick = () => {
     location.reload();
+};
+
+socket.on("musicaPartida", () => {
+    const cancion = canciones[Math.floor(Math.random() * canciones.length)];
+    musica.src = cancion;
+    musica.currentTime = 0;
+    musica.play().catch(() => {
+        mensajePartida.textContent = "Hacé clic en la pantalla para activar la música.";
+    });
 });
-
-/* INICIAR BUCLE */
-actualizarMovimiento();
+document.addEventListener("click", () => {
+    if (musica.src && musica.paused && fase !== "terminada") {
+        musica.play().catch(() => {});
+    }
+});
 </script>
-
 </body>
 </html>
