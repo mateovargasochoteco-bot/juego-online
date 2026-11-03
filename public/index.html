@@ -1,1125 +1,1546 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escondite online</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escondite Online</title>
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+<style>
+* {
+    box-sizing: border-box;
+}
 
-        body {
-            margin: 0;
-            overflow: hidden;
-            background: #10151c;
-            color: white;
-            font-family: Arial, sans-serif;
-        }
+body {
+    margin: 0;
+    background: #111;
+    color: white;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
 
-        #menu {
-            position: fixed;
-            inset: 0;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            padding: 20px;
-            background: linear-gradient(135deg, #111827, #263849);
-        }
+/* MENU */
+#menu {
+    width: 400px;
+    max-width: 90%;
+    margin: 60px auto;
+    padding: 30px;
+    background: #2c3038;
+    border-radius: 15px;
+    text-align: center;
+}
 
-        #menu h1 {
-            color: #ffcc44;
-            text-align: center;
-            font-size: clamp(28px, 5vw, 52px);
-        }
+input, button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+}
 
-        #menu input,
-        #menu button {
-            width: min(320px, 90vw);
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 16px;
-        }
+button {
+    background: #4caf50;
+    color: white;
+    cursor: pointer;
+}
 
-        #menu input {
-            border: 2px solid #718096;
-            background: white;
-            color: #111;
-        }
+button:hover {
+    background: #45a049;
+}
 
-        #menu button {
-            border: 0;
-            background: #e85d04;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
+#mensaje {
+    color: #ffd166;
+}
 
-        #menu button:hover {
-            background: #ff7900;
-        }
+/* JUEGO */
+#juego {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+}
 
-        #mensaje-menu {
-            max-width: 340px;
-            text-align: center;
-            color: #ffe8a3;
-            line-height: 1.4;
-        }
+/* INFORMACION */
+#informacion {
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 8px;
+    text-align: center;
+    background: rgba(0,0,0,.9);
+    border-bottom: 2px solid white;
+}
 
-        #juego {
-            display: none;
-            position: fixed;
-            inset: 0;
-            overflow: hidden;
-        }
+#informacion h2 {
+    margin: 2px;
+}
 
-        #interfaz {
-            position: absolute;
-            z-index: 30;
-            top: 0;
-            left: 0;
-            right: 0;
-            min-height: 65px;
-            padding: 10px 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            flex-wrap: wrap;
-            background: rgba(0, 0, 0, 0.85);
-            border-bottom: 2px solid #e85d04;
-        }
+#informacion p {
+    margin: 3px;
+}
 
-        #estado,
-        #reloj,
-        #sala-info {
-            font-weight: bold;
-        }
+#codigoSala {
+    color: #ffd166;
+    letter-spacing: 4px;
+}
 
-        #reloj {
-            color: #ffcc44;
-            font-size: 22px;
-        }
+/* CAMARA */
+#camara {
+    position: fixed;
+    top: 82px;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - 82px);
+    overflow: hidden;
+    background: #222;
+}
 
-        #area {
-            position: absolute;
-            inset: 65px 0 0;
-            overflow: hidden;
-            background: #26372b;
-        }
+/* CAMARA NEGRA DEL BUSCADOR */
+#camara.camara-negra {
+    background: #000;
+}
 
-        #mundo {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 2050px;
-            height: 1700px;
-            overflow: hidden;
-            background-color: #35483a;
-            background-image: radial-gradient(
-                #405744 1.5px,
-                transparent 1.5px
-            );
-            background-size: 24px 24px;
-            will-change: left, top;
-        }
+#camara.camara-negra #mapa {
+    visibility: hidden;
+}
 
-        .habitacion {
-            position: absolute;
-            width: 560px;
-            height: 440px;
-            background-color: #776c58;
-            background-image:
-                repeating-linear-gradient(
-                    0deg,
-                    transparent 0 48px,
-                    rgba(0, 0, 0, 0.10) 49px 51px
-                ),
-                repeating-linear-gradient(
-                    90deg,
-                    transparent 0 48px,
-                    rgba(0, 0, 0, 0.10) 49px 51px
-                );
-            box-shadow: inset 0 0 0 5px #4a3c2b;
-        }
+/* MAPA */
+#mapa {
+    position: absolute;
+    width: 2100px;
+    height: 1350px;
+    left: 0;
+    top: 0;
+    background: #555;
+    transform-origin: top left;
+    transition:
+        left .08s linear,
+        top .08s linear,
+        transform .25s ease;
+}
 
-        .nombre-habitacion {
-            position: absolute;
-            top: 18px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            color: #fff1d0;
-            font-size: 20px;
-            font-weight: bold;
-            text-shadow: 2px 2px #222;
-            pointer-events: none;
-        }
+/* HABITACIONES */
+.habitacion {
+    position: absolute;
+    background: #777;
+    z-index: 2;
+}
 
-        .pared {
-            position: absolute;
-            z-index: 3;
-            background: #30271f;
-            border: 2px solid #171411;
-        }
+#habitacion1 {
+    left: 75px;
+    top: 75px;
+    width: 525px;
+    height: 450px;
+}
 
-        .mueble {
-            position: absolute;
-            z-index: 2;
-            background: #483326;
-            border: 4px solid #24180f;
-            border-radius: 4px;
-            pointer-events: none;
-        }
+#habitacion2 {
+    left: 788px;
+    top: 75px;
+    width: 525px;
+    height: 450px;
+}
 
-        .jugador {
-            position: absolute;
-            width: 34px;
-            height: 48px;
-            z-index: 10;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-        }
+#habitacion3 {
+    left: 1575px;
+    top: 75px;
+    width: 450px;
+    height: 450px;
+}
 
-        .cabeza {
-            position: absolute;
-            top: 0;
-            left: 8px;
-            width: 19px;
-            height: 19px;
-            background: #f0c39a;
-            border: 2px solid #38251c;
-            border-radius: 50%;
-            z-index: 3;
-        }
+#habitacion4 {
+    left: 75px;
+    top: 750px;
+    width: 525px;
+    height: 525px;
+}
 
-        .pelo {
-            position: absolute;
-            top: -1px;
-            left: 7px;
-            width: 21px;
-            height: 8px;
-            background: #26201c;
-            border-radius: 8px 8px 2px 2px;
-            z-index: 4;
-        }
+#habitacion5 {
+    left: 788px;
+    top: 750px;
+    width: 525px;
+    height: 525px;
+}
 
-        .cuerpo {
-            position: absolute;
-            top: 17px;
-            left: 6px;
-            width: 23px;
-            height: 20px;
-            background: #e85d04;
-            border: 2px solid #2a1b14;
-            border-radius: 5px;
-        }
+#habitacion6 {
+    left: 1575px;
+    top: 750px;
+    width: 450px;
+    height: 525px;
+}
 
-        .brazo {
-            position: absolute;
-            top: 19px;
-            width: 7px;
-            height: 19px;
-            background: #f0c39a;
-            border: 1px solid #38251c;
-            border-radius: 4px;
-        }
+/* PASILLOS */
+.pasillo {
+    position: absolute;
+    background: #555;
+    z-index: 1;
+}
 
-        .brazo.izquierdo {
-            left: 1px;
-            transform: rotate(12deg);
-        }
+.pasillo1 {
+    left: 600px;
+    top: 262px;
+    width: 188px;
+    height: 120px;
+}
 
-        .brazo.derecho {
-            right: 1px;
-            transform: rotate(-12deg);
-        }
+.pasillo2 {
+    left: 1312px;
+    top: 262px;
+    width: 262px;
+    height: 120px;
+}
 
-        .pierna {
-            position: absolute;
-            top: 34px;
-            width: 9px;
-            height: 14px;
-            background: #202d43;
-            border: 1px solid #111;
-            border-radius: 2px;
-        }
+.pasillo3 {
+    left: 600px;
+    top: 938px;
+    width: 188px;
+    height: 120px;
+}
 
-        .pierna.izquierda {
-            left: 8px;
-        }
+.pasillo4 {
+    left: 1312px;
+    top: 938px;
+    width: 262px;
+    height: 120px;
+}
 
-        .pierna.derecha {
-            right: 8px;
-        }
+.pasillo5 {
+    left: 278px;
+    top: 525px;
+    width: 120px;
+    height: 225px;
+}
 
-        .nombre-jugador {
-            position: absolute;
-            bottom: 49px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 3px 6px;
-            border-radius: 4px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-            white-space: nowrap;
-        }
+.pasillo6 {
+    left: 990px;
+    top: 525px;
+    width: 120px;
+    height: 225px;
+}
 
-        .jugador.propio .cuerpo {
-            background: #00b4d8;
-        }
+.pasillo7 {
+    left: 1740px;
+    top: 525px;
+    width: 120px;
+    height: 225px;
+}
 
-        .jugador.buscador .cuerpo {
-            background: #d00000;
-        }
+/* PAREDES */
+.pared {
+    position: absolute;
+    background: #171717;
+    border: 3px solid #333;
+    z-index: 20;
+}
 
-        .jugador.atrapado {
-            opacity: 0.35;
-            filter: grayscale(1);
-        }
+/* PUERTAS */
+.puerta {
+    position: absolute;
+    background: #b8793c;
+    border: 3px solid #633a1d;
+    z-index: 30;
+}
 
-        #oscuridad {
-            position: absolute;
-            z-index: 20;
-            inset: 0;
-            pointer-events: none;
-            display: none;
-            background: radial-gradient(
-                circle 250px at 50% 50%,
-                transparent 0 65%,
-                rgba(0, 0, 0, 0.96) 100%
-            );
-        }
+.puerta-horizontal {
+    width: 120px;
+    height: 21px;
+}
 
-        #minimapa {
-            position: absolute;
-            z-index: 25;
-            right: 12px;
-            bottom: 12px;
-            width: 170px;
-            height: 140px;
-            border: 2px solid white;
-            border-radius: 5px;
-            background: rgba(0, 0, 0, 0.8);
-        }
+.puerta-vertical {
+    width: 21px;
+    height: 120px;
+}
 
-        #controles {
-            position: absolute;
-            z-index: 26;
-            left: 12px;
-            bottom: 12px;
-            padding: 10px;
-            max-width: 230px;
-            border-radius: 8px;
-            background: rgba(0, 0, 0, 0.8);
-            font-size: 13px;
-            line-height: 1.5;
-        }
+/* DECORACION */
+.nombreHabitacion {
+    position: absolute;
+    left: 30px;
+    top: 30px;
+    padding: 10px 15px;
+    background: rgba(0,0,0,.65);
+    border-radius: 9px;
+    font-weight: bold;
+    z-index: 10;
+}
 
-        #resultado {
-            position: absolute;
-            z-index: 50;
-            inset: 0;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 14px;
-            background: rgba(0, 0, 0, 0.86);
-            text-align: center;
-            padding: 20px;
-        }
+.mesa {
+    position: absolute;
+    width: 135px;
+    height: 82px;
+    background: #75451f;
+    border: 8px solid #48260e;
+    border-radius: 15px;
+    z-index: 5;
+}
 
-        #resultado h2 {
-            color: #ffcc44;
-            font-size: clamp(28px, 5vw, 48px);
-            margin: 0;
-        }
+.alfombra {
+    position: absolute;
+    width: 225px;
+    height: 150px;
+    background: #914b52;
+    border: 8px solid #633238;
+    border-radius: 22px;
+    z-index: 3;
+}
 
-        #resultado button {
-            border: 0;
-            border-radius: 8px;
-            padding: 12px 22px;
-            background: #e85d04;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
+/* JUGADORES */
+.jugador {
+    position: absolute;
+    width: 50px;
+    height: 65px;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    pointer-events: none;
+}
 
-        @media (max-width: 650px) {
-            #interfaz {
-                font-size: 12px;
-            }
+.cabeza {
+    position: absolute;
+    width: 27px;
+    height: 27px;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    background: #f1c27d;
+    border: 2px solid #222;
+    border-radius: 50%;
+    z-index: 3;
+}
 
-            #reloj {
-                font-size: 17px;
-            }
+.pelo {
+    position: absolute;
+    width: 29px;
+    height: 13px;
+    left: 50%;
+    top: -2px;
+    transform: translateX(-50%);
+    background: #222;
+    border-radius: 50% 50% 30% 30%;
+    z-index: 4;
+}
 
-            #minimapa {
-                width: 120px;
-                height: 100px;
-            }
+.cuerpo {
+    position: absolute;
+    width: 32px;
+    height: 29px;
+    left: 50%;
+    top: 25px;
+    transform: translateX(-50%);
+    border-radius: 8px;
+    border: 2px solid #111;
+}
 
-            #controles {
-                max-width: 175px;
-                font-size: 11px;
-            }
+.brazo {
+    position: absolute;
+    width: 9px;
+    height: 25px;
+    top: 27px;
+    background: #f1c27d;
+    border: 2px solid #222;
+    border-radius: 5px;
+}
 
-            #oscuridad {
-                background: radial-gradient(
-                    circle 190px at 50% 50%,
-                    transparent 0 60%,
-                    rgba(0, 0, 0, 0.97) 100%
-                );
-            }
-        }
-    </style>
+.brazo-izquierdo {
+    left: 2px;
+}
+
+.brazo-derecho {
+    right: 2px;
+}
+
+.pierna {
+    position: absolute;
+    width: 10px;
+    height: 18px;
+    top: 51px;
+    background: #222;
+    border-radius: 4px;
+}
+
+.pierna-izquierda {
+    left: 14px;
+}
+
+.pierna-derecha {
+    right: 14px;
+}
+
+.jugador1 .cuerpo {
+    background: #3498db;
+}
+
+.otroJugador .cuerpo {
+    background: #e74c3c;
+}
+
+.nombreJugador {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    padding: 3px 6px;
+    background: rgba(0,0,0,.75);
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+.jugador.escondido {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.jugador.atrapado {
+    filter: grayscale(1);
+    opacity: .65;
+}
+
+/* HUD */
+#hudEscondite {
+    position: fixed;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3000;
+    min-width: 330px;
+    max-width: calc(100vw - 30px);
+    padding: 12px 18px;
+    text-align: center;
+    background: rgba(0,0,0,.9);
+    border: 2px solid #fff;
+    border-radius: 12px;
+    box-shadow: 0 0 18px rgba(0,0,0,.65);
+    pointer-events: none;
+}
+
+#fasePartida {
+    font-size: 22px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+#temporizadorPartida {
+    margin-top: 4px;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+#rolPartida {
+    margin-top: 3px;
+    font-size: 14px;
+}
+
+#mensajePartida {
+    margin-top: 5px;
+    font-size: 13px;
+}
+
+/* RESULTADO */
+#overlayPartida {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.78);
+}
+
+#panelResultado {
+    width: min(460px, calc(100vw - 30px));
+    padding: 30px;
+    text-align: center;
+    background: #111;
+    border: 3px solid white;
+    border-radius: 18px;
+    box-shadow: 0 0 30px rgba(0,0,0,.8);
+}
+
+#panelResultado h2 {
+    margin: 0 0 12px;
+    font-size: 32px;
+}
+
+#panelResultado p {
+    margin: 8px 0 20px;
+    font-size: 17px;
+}
+
+/* MINIMAPA */
+#minimapaContenedor {
+    position: fixed;
+    right: 14px;
+    top: 100px;
+    width: 230px;
+    padding: 8px;
+    z-index: 2500;
+    background: rgba(0,0,0,.86);
+    border: 2px solid #f1c40f;
+    border-radius: 10px;
+    box-shadow: 0 0 12px rgba(0,0,0,.6);
+}
+
+#minimapaTitulo {
+    margin: 0 0 5px;
+    font-size: 12px;
+    text-align: center;
+    color: #f1c40f;
+}
+
+#minimapa {
+    display: block;
+    width: 210px;
+    height: 135px;
+    background: #30343b;
+    border: 1px solid #888;
+    border-radius: 4px;
+}
+
+#minimapaLeyenda {
+    margin-top: 5px;
+    font-size: 10px;
+    color: #ddd;
+    text-align: center;
+}
+
+/* HABITACION ACTUAL */
+#habitacionActual {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1000;
+    padding: 10px 15px;
+    background: rgba(0,0,0,.85);
+    border: 2px solid white;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+#musicaPartida {
+    display: none;
+}
+
+@media (max-width: 650px) {
+    #minimapaContenedor {
+        width: 150px;
+        right: 5px;
+        top: 145px;
+        padding: 5px;
+    }
+
+    #minimapa {
+        width: 136px;
+        height: 87px;
+    }
+
+    #minimapaLeyenda {
+        font-size: 9px;
+    }
+}
+</style>
 </head>
 
 <body>
 
-    <div id="menu">
-        <h1>ESCONDITE ONLINE</h1>
+<div id="menu">
+    <h1>🎮 Juego Online</h1>
 
-        <input id="nombre" maxlength="16" placeholder="Tu nombre">
+    <h2>Crear sala</h2>
+    <button id="crearSala">Crear sala</button>
 
-        <button id="crear">Crear sala</button>
+    <hr>
 
-        <input id="codigo" maxlength="5" placeholder="Código de sala">
+    <h2>Unirse</h2>
+    <input id="codigoInput" maxlength="5" placeholder="Código de sala">
+    <button id="unirseSala">Unirse a sala</button>
 
-        <button id="unirse">Unirse a una sala</button>
+    <p id="mensaje"></p>
+</div>
 
-        <p id="mensaje-menu">
-            Se necesitan 4 jugadores. El buscador tendrá 15 segundos
-            para contar y luego 100 segundos para encontrar a todos.
-        </p>
+<div id="juego">
+
+    <div id="hudEscondite">
+        <div id="fasePartida">ESPERANDO JUGADORES</div>
+        <div id="temporizadorPartida">--</div>
+        <div id="rolPartida">Esperando que se conecten los 4 jugadores...</div>
+        <div id="mensajePartida"></div>
     </div>
 
-    <div id="juego">
+    <audio id="musicaPartida" loop preload="auto"></audio>
 
-        <div id="interfaz">
-            <div id="sala-info">Sala: ---</div>
-            <div id="estado">Esperando jugadores...</div>
-            <div id="reloj">--</div>
+    <div id="overlayPartida">
+        <div id="panelResultado">
+            <h2 id="tituloResultado">Fin de la partida</h2>
+            <p id="textoResultado"></p>
+            <button id="volverMenu" type="button">VOLVER AL MENÚ</button>
         </div>
+    </div>
 
-        <div id="area">
-            <div id="mundo"></div>
-            <div id="oscuridad"></div>
+    <div id="informacion">
+        <h2>Sala: <span id="codigoSala"></span></h2>
+        <p>Jugadores: <span id="cantidadJugadores">0</span>/4</p>
+        <p>Usá W A S D para moverte</p>
+    </div>
 
-            <canvas id="minimapa" width="340" height="280"></canvas>
+    <div id="camara">
+        <div id="mapa">
 
-            <div id="controles">
-                <b>Controles</b><br>
-                W A S D o flechas: moverse<br>
-                El buscador tiene visión limitada.
+            <div id="habitacion1" class="habitacion">
+                <div class="nombreHabitacion">🛋️ Sala de estar</div>
+                <div class="mesa" style="left:150px;top:195px;"></div>
+                <div class="alfombra" style="left:255px;top:255px;"></div>
             </div>
-        </div>
 
-        <div id="resultado">
-            <h2 id="texto-resultado">Fin de la partida</h2>
-            <p id="detalle-resultado"></p>
-            <button onclick="location.reload()">Volver al menú</button>
-        </div>
+            <div id="habitacion2" class="habitacion">
+                <div class="nombreHabitacion">🍳 Cocina</div>
+                <div class="mesa" style="left:180px;top:195px;"></div>
+            </div>
 
+            <div id="habitacion3" class="habitacion">
+                <div class="nombreHabitacion">🛏️ Dormitorio</div>
+                <div class="alfombra" style="left:105px;top:180px;"></div>
+            </div>
+
+            <div id="habitacion4" class="habitacion">
+                <div class="nombreHabitacion">📚 Biblioteca</div>
+                <div class="mesa" style="left:150px;top:195px;"></div>
+            </div>
+
+            <div id="habitacion5" class="habitacion">
+                <div class="nombreHabitacion">⭐ Sala central</div>
+                <div class="alfombra" style="left:150px;top:180px;"></div>
+                <div class="mesa" style="left:195px;top:218px;"></div>
+            </div>
+
+            <div id="habitacion6" class="habitacion">
+                <div class="nombreHabitacion">🎮 Sala de juegos</div>
+                <div class="mesa" style="left:150px;top:180px;"></div>
+            </div>
+
+            <div class="pasillo pasillo1"></div>
+            <div class="pasillo pasillo2"></div>
+            <div class="pasillo pasillo3"></div>
+            <div class="pasillo pasillo4"></div>
+            <div class="pasillo pasillo5"></div>
+            <div class="pasillo pasillo6"></div>
+            <div class="pasillo pasillo7"></div>
+
+        </div>
     </div>
 
-    <audio id="musica" loop></audio>
+    <div id="minimapaContenedor">
+        <div id="minimapaTitulo">MINIMAPA · MAPA COMPLETO</div>
+        <canvas id="minimapa" width="210" height="135"></canvas>
+        <div id="minimapaLeyenda">Azul: vos · Rojo: jugador visible</div>
+    </div>
 
-    <script src="/socket.io/socket.io.js"></script>
+    <div id="habitacionActual">Pasillo</div>
+</div>
 
-    <script>
-        const socket = io();
+<script src="/socket.io/socket.io.js"></script>
 
-        const menu = document.getElementById("menu");
-        const juego = document.getElementById("juego");
-        const area = document.getElementById("area");
-        const mundo = document.getElementById("mundo");
-        const oscuridad = document.getElementById("oscuridad");
-        const estado = document.getElementById("estado");
-        const reloj = document.getElementById("reloj");
-        const salaInfo = document.getElementById("sala-info");
-        const mensajeMenu = document.getElementById("mensaje-menu");
-        const resultado = document.getElementById("resultado");
-        const musica = document.getElementById("musica");
-        const minimapa = document.getElementById("minimapa");
-        const ctx = minimapa.getContext("2d");
+<script>
+/* =====================================
+   ESCONDITE ONLINE
+===================================== */
 
-        const ANCHO_MAPA = 2050;
-        const ALTO_MAPA = 1700;
-        const ANCHO_HAB = 560;
-        const ALTO_HAB = 440;
-        const PASO = 680;
-        const FILA = 560;
-        const GROSOR_PARED = 14;
-        const ANCHO_PUERTA = 100;
+const socket = io();
 
-        let codigoSala = "";
-        let miId = "";
-        let jugadores = [];
-        let fase = "esperando";
-        let tiempoRestante = 0;
-        let rol = "";
+/* ELEMENTOS */
 
-        let posicion = { x: 150, y: 150 };
+const menu = document.getElementById("menu");
+const juego = document.getElementById("juego");
+const crearSala = document.getElementById("crearSala");
+const unirseSala = document.getElementById("unirseSala");
+const codigoInput = document.getElementById("codigoInput");
+const codigoSala = document.getElementById("codigoSala");
+const cantidadJugadores = document.getElementById("cantidadJugadores");
+const mapa = document.getElementById("mapa");
+const camara = document.getElementById("camara");
+const mensaje = document.getElementById("mensaje");
+const habitacionActual = document.getElementById("habitacionActual");
 
-        let teclas = {};
-        let ultimoEnvio = 0;
-        let finPartida = false;
+const minimapa = document.getElementById("minimapa");
+const minimapaContenedor = document.getElementById("minimapaContenedor");
+const contextoMinimapa = minimapa.getContext("2d");
 
-        // IMPORTANTE:
-        // Recibimos nuestra posición inicial del servidor una sola vez.
-        // Después no dejamos que los estados atrasados la sobrescriban.
-        let posicionInicializada = false;
+const fasePartida = document.getElementById("fasePartida");
+const temporizadorPartida = document.getElementById("temporizadorPartida");
+const rolPartida = document.getElementById("rolPartida");
+const mensajePartida = document.getElementById("mensajePartida");
 
-        const elementosJugadores = new Map();
-        const paredes = [];
+const overlayPartida = document.getElementById("overlayPartida");
+const tituloResultado = document.getElementById("tituloResultado");
+const textoResultado = document.getElementById("textoResultado");
+const volverMenu = document.getElementById("volverMenu");
 
-        const habitaciones = [
-            "Sala de estar",
-            "Cocina",
-            "Dormitorio",
-            "Biblioteca",
-            "Sala central",
-            "Sala de juegos",
-            "Habitación 7",
-            "Habitación 8",
-            "Habitación 9"
-        ];
+const musicaPartida = document.getElementById("musicaPartida");
 
-        function crearPared(x, y, ancho, alto) {
-            const pared = document.createElement("div");
+/* JUGADOR LOCAL */
 
-            pared.className = "pared";
-            pared.style.left = x + "px";
-            pared.style.top = y + "px";
-            pared.style.width = ancho + "px";
-            pared.style.height = alto + "px";
+let miId = null;
 
-            mundo.appendChild(pared);
+let miJugador = {
+    x: 700,
+    y: 450
+};
 
-            paredes.push({
-                x,
-                y,
-                ancho,
-                alto
+let posicionInicialRecibida = false;
+let jugadoresActuales = [];
+
+let miRol = "esperando";
+let faseActual = "esperando";
+let partidaTerminada = false;
+
+const ESCALA_MAPA = 1.5;
+const RADIO_JUGADOR = 27;
+
+const teclas = Object.create(null);
+const teclasMovimiento = new Set(["w", "a", "s", "d"]);
+
+const elementosJugadores = new Map();
+
+let direccionJugador = {
+    x: 1,
+    y: 0
+};
+
+/* MÚSICA */
+
+const canciones = [
+    "/img/gd1.mp3",
+    "/img/gd2.mp3",
+    "/img/gd3.mp3",
+    "/img/gd4.mp3"
+];
+
+let indiceCancionActual = -1;
+
+/* =====================================
+   PAREDES Y PUERTAS
+===================================== */
+
+function rect(x, y, ancho, alto) {
+    return { x, y, ancho, alto };
+}
+
+const paredes = [
+    rect(50, 50, 350, 14),
+    rect(50, 336, 350, 14),
+    rect(50, 50, 14, 300),
+    rect(386, 50, 14, 110),
+    rect(386, 240, 14, 110),
+
+    rect(525, 50, 350, 14),
+    rect(525, 336, 350, 14),
+    rect(525, 50, 14, 110),
+    rect(525, 240, 14, 110),
+    rect(861, 50, 14, 110),
+    rect(861, 240, 14, 110),
+
+    rect(1050, 50, 300, 14),
+    rect(1050, 336, 300, 14),
+    rect(1050, 50, 14, 110),
+    rect(1050, 240, 14, 110),
+    rect(1336, 50, 14, 300),
+
+    rect(50, 500, 350, 14),
+    rect(50, 836, 350, 14),
+    rect(50, 500, 14, 350),
+    rect(386, 500, 14, 110),
+    rect(386, 690, 14, 160),
+
+    rect(525, 500, 350, 14),
+    rect(525, 836, 350, 14),
+    rect(525, 500, 14, 110),
+    rect(525, 690, 14, 160),
+    rect(861, 500, 14, 110),
+    rect(861, 690, 14, 160),
+
+    rect(1050, 500, 300, 14),
+    rect(1050, 836, 300, 14),
+    rect(1050, 500, 14, 110),
+    rect(1050, 690, 14, 160),
+    rect(1336, 500, 14, 350)
+];
+
+// Ampliar las paredes para que coincidan con el mapa.
+for (const pared of paredes) {
+    pared.x *= ESCALA_MAPA;
+    pared.y *= ESCALA_MAPA;
+    pared.ancho *= ESCALA_MAPA;
+    pared.alto *= ESCALA_MAPA;
+
+    const elemento = document.createElement("div");
+    elemento.className = "pared";
+
+    elemento.style.left = pared.x + "px";
+    elemento.style.top = pared.y + "px";
+    elemento.style.width = pared.ancho + "px";
+    elemento.style.height = pared.alto + "px";
+
+    mapa.appendChild(elemento);
+}
+
+// Puertas horizontales y verticales.
+const puertas = [
+    { x: 338, y: 504, tipo: "horizontal" },
+    { x: 960, y: 504, tipo: "horizontal" },
+    { x: 1725, y: 504, tipo: "horizontal" },
+
+    { x: 338, y: 750, tipo: "horizontal" },
+    { x: 960, y: 750, tipo: "horizontal" },
+    { x: 1725, y: 750, tipo: "horizontal" },
+
+    { x: 579, y: 262, tipo: "vertical" },
+    { x: 788, y: 262, tipo: "vertical" },
+    { x: 1292, y: 262, tipo: "vertical" },
+    { x: 1575, y: 262, tipo: "vertical" },
+
+    { x: 579, y: 938, tipo: "vertical" },
+    { x: 788, y: 938, tipo: "vertical" },
+    { x: 1292, y: 938, tipo: "vertical" },
+    { x: 1575, y: 938, tipo: "vertical" }
+];
+
+for (const puerta of puertas) {
+    const elemento = document.createElement("div");
+
+    elemento.className =
+        "puerta puerta-" + puerta.tipo;
+
+    elemento.style.left = puerta.x + "px";
+    elemento.style.top = puerta.y + "px";
+
+    mapa.appendChild(elemento);
+}
+
+/* =====================================
+   CONEXIÓN
+===================================== */
+
+socket.on("connect", () => {
+    miId = socket.id;
+});
+
+/* CREAR SALA */
+
+crearSala.addEventListener("click", () => {
+    socket.emit("crearSala");
+});
+
+/* UNIRSE A SALA */
+
+unirseSala.addEventListener("click", () => {
+    const codigo = codigoInput.value.trim().toUpperCase();
+
+    if (codigo === "") {
+        mensaje.textContent = "Escribí un código.";
+        return;
+    }
+
+    socket.emit("unirseSala", codigo);
+});
+
+codigoInput.addEventListener("keydown", evento => {
+    if (evento.key === "Enter") {
+        unirseSala.click();
+    }
+});
+
+/* ENTRAR AL JUEGO */
+
+socket.on("salaCreada", datos => {
+    entrarAlJuego(datos);
+});
+
+socket.on("salaUnida", datos => {
+    entrarAlJuego(datos);
+});
+
+function entrarAlJuego(datos) {
+    menu.style.display = "none";
+    juego.style.display = "block";
+
+    posicionInicialRecibida = false;
+    partidaTerminada = false;
+
+    overlayPartida.style.display = "none";
+
+    if (datos && datos.codigo) {
+        codigoSala.textContent = datos.codigo;
+    }
+
+    if (datos && datos.jugadores !== undefined) {
+        cantidadJugadores.textContent = datos.jugadores;
+    }
+
+    actualizarCamara();
+}
+
+/* =====================================
+   ESTADO DE LA PARTIDA
+===================================== */
+
+socket.on("estadoPartida", estado => {
+    if (!estado) return;
+
+    faseActual = estado.fase || "esperando";
+    miRol = estado.miRol || "esperando";
+
+    if (estado.jugadores !== undefined) {
+        cantidadJugadores.textContent = estado.jugadores;
+    }
+
+    actualizarHUD(estado);
+    actualizarCamara();
+
+    if (estado.fase === "fin") {
+        mostrarResultado(estado);
+    }
+});
+
+/* HUD */
+
+function actualizarHUD(estado) {
+    const tiempo = Number.isFinite(estado.tiempo)
+        ? Math.max(0, Math.ceil(estado.tiempo))
+        : 0;
+
+    temporizadorPartida.textContent =
+        estado.fase === "esperando" ? "--" : tiempo;
+
+    if (estado.fase === "cuenta") {
+        fasePartida.textContent = "EL BUSCADOR CUENTA";
+
+        rolPartida.textContent =
+            miRol === "buscador"
+                ? "Sos el BUSCADOR. No podés moverte."
+                : "Sos ESCONDIDO. ¡Buscá un lugar!";
+
+        mensajePartida.textContent =
+            miRol === "buscador"
+                ? "No vas a ver nada hasta que termine la cuenta."
+                : "El buscador está contando...";
+    }
+    else if (estado.fase === "busqueda") {
+        fasePartida.textContent = "¡A BUSCAR!";
+
+        rolPartida.textContent =
+            miRol === "buscador"
+                ? "Sos el BUSCADOR. Encontrá a todos."
+                : "Sos ESCONDIDO. ¡No dejes que te encuentren!";
+
+        mensajePartida.textContent =
+            "El buscador tiene una vista más reducida.";
+    }
+    else if (estado.fase === "fin") {
+        fasePartida.textContent = "PARTIDA TERMINADA";
+    }
+    else {
+        fasePartida.textContent = "ESPERANDO JUGADORES";
+        rolPartida.textContent =
+            "Se necesitan 4 jugadores para comenzar.";
+        mensajePartida.textContent = "";
+    }
+}
+
+/* =====================================
+   MÚSICA
+===================================== */
+
+socket.on("musicaPartida", datos => {
+    if (!datos || !Number.isInteger(datos.indice)) return;
+
+    const indice = datos.indice % canciones.length;
+
+    if (indice === indiceCancionActual) return;
+
+    indiceCancionActual = indice;
+    musicaPartida.src = canciones[indice];
+    musicaPartida.currentTime = 0;
+
+    const promesa = musicaPartida.play();
+
+    if (promesa && typeof promesa.catch === "function") {
+        promesa.catch(() => {
+            console.log("El navegador bloqueó la reproducción automática.");
+        });
+    }
+});
+
+function detenerMusica() {
+    musicaPartida.pause();
+    musicaPartida.currentTime = 0;
+}
+
+/* =====================================
+   JUGADORES
+===================================== */
+
+socket.on("actualizarJugadores", jugadores => {
+    jugadoresActuales = Array.isArray(jugadores)
+        ? jugadores
+        : [];
+
+    actualizarJugadoresDOM();
+});
+
+function actualizarJugadoresDOM() {
+    const idsVisibles = new Set();
+
+    jugadoresActuales.forEach((jugador, indice) => {
+        idsVisibles.add(jugador.id);
+
+        let elemento = elementosJugadores.get(jugador.id);
+
+        if (!elemento) {
+            elemento = crearElementoJugador(jugador, indice);
+            elementosJugadores.set(jugador.id, elemento);
+            mapa.appendChild(elemento);
+        }
+
+        const esYo = jugador.id === miId;
+
+        if (esYo && !posicionInicialRecibida) {
+            miJugador.x = jugador.x;
+            miJugador.y = jugador.y;
+            posicionInicialRecibida = true;
+        }
+
+        elemento.classList.toggle("jugador1", esYo);
+        elemento.classList.toggle("otroJugador", !esYo);
+        elemento.classList.toggle(
+            "escondido",
+            jugador.visible === false
+        );
+        elemento.classList.toggle(
+            "atrapado",
+            jugador.atrapado === true
+        );
+
+        const nombre = elemento.querySelector(".nombreJugador");
+
+        if (nombre) {
+            nombre.textContent = esYo
+                ? "YO"
+                : (
+                    jugador.rol === "buscador"
+                        ? "BUSCADOR"
+                        : "Jugador " + (indice + 1)
+                );
+        }
+
+        if (!esYo) {
+            elemento.style.left = jugador.x + "px";
+            elemento.style.top = jugador.y + "px";
+        }
+    });
+
+    // Eliminar jugadores que ya no están en la sala.
+    for (const [id, elemento] of elementosJugadores.entries()) {
+        if (!idsVisibles.has(id)) {
+            elemento.remove();
+            elementosJugadores.delete(id);
+        }
+    }
+
+    renderizarJugadorLocal();
+}
+
+/* CREAR PERSONA */
+
+function crearElementoJugador(jugador, indice) {
+    const elemento = document.createElement("div");
+    elemento.className = "jugador";
+
+    const cabeza = document.createElement("div");
+    cabeza.className = "cabeza";
+
+    const pelo = document.createElement("div");
+    pelo.className = "pelo";
+
+    const cuerpo = document.createElement("div");
+    cuerpo.className = "cuerpo";
+
+    const brazo1 = document.createElement("div");
+    brazo1.className = "brazo brazo-izquierdo";
+
+    const brazo2 = document.createElement("div");
+    brazo2.className = "brazo brazo-derecho";
+
+    const pierna1 = document.createElement("div");
+    pierna1.className = "pierna pierna-izquierda";
+
+    const pierna2 = document.createElement("div");
+    pierna2.className = "pierna pierna-derecha";
+
+    const nombre = document.createElement("div");
+    nombre.className = "nombreJugador";
+
+    nombre.textContent =
+        jugador.id === miId
+            ? "YO"
+            : "Jugador " + (indice + 1);
+
+    elemento.append(
+        cabeza,
+        pelo,
+        cuerpo,
+        brazo1,
+        brazo2,
+        pierna1,
+        pierna2,
+        nombre
+    );
+
+    elemento.style.left = jugador.x + "px";
+    elemento.style.top = jugador.y + "px";
+
+    return elemento;
+}
+
+function renderizarJugadorLocal() {
+    const elemento = elementosJugadores.get(miId);
+
+    if (!elemento) return;
+
+    elemento.style.left = miJugador.x + "px";
+    elemento.style.top = miJugador.y + "px";
+}
+
+/* =====================================
+   TECLADO
+===================================== */
+
+document.addEventListener("keydown", evento => {
+    const tecla = evento.key.toLowerCase();
+
+    if (teclasMovimiento.has(tecla)) {
+        evento.preventDefault();
+        teclas[tecla] = true;
+    }
+});
+
+document.addEventListener("keyup", evento => {
+    const tecla = evento.key.toLowerCase();
+
+    if (teclasMovimiento.has(tecla)) {
+        evento.preventDefault();
+        teclas[tecla] = false;
+    }
+});
+
+window.addEventListener("blur", () => {
+    for (const tecla of teclasMovimiento) {
+        teclas[tecla] = false;
+    }
+});
+
+/* =====================================
+   COLISIONES
+===================================== */
+
+function colisionaConPared(x, y, pared) {
+    const puntoX = Math.max(
+        pared.x,
+        Math.min(x, pared.x + pared.ancho)
+    );
+
+    const puntoY = Math.max(
+        pared.y,
+        Math.min(y, pared.y + pared.alto)
+    );
+
+    const distanciaX = x - puntoX;
+    const distanciaY = y - puntoY;
+
+    return Math.sqrt(
+        distanciaX * distanciaX +
+        distanciaY * distanciaY
+    ) < RADIO_JUGADOR;
+}
+
+function tocaPared(x, y) {
+    return paredes.some(pared =>
+        colisionaConPared(x, y, pared)
+    );
+}
+
+function moverJugador(nuevoX, nuevoY) {
+    if (!tocaPared(nuevoX, nuevoY)) {
+        miJugador.x = nuevoX;
+        miJugador.y = nuevoY;
+        return;
+    }
+
+    if (!tocaPared(nuevoX, miJugador.y)) {
+        miJugador.x = nuevoX;
+    }
+
+    if (!tocaPared(miJugador.x, nuevoY)) {
+        miJugador.y = nuevoY;
+    }
+}
+
+/* =====================================
+   MOVIMIENTO
+===================================== */
+
+function actualizarMovimiento() {
+    if (juego.style.display === "none") {
+        requestAnimationFrame(actualizarMovimiento);
+        return;
+    }
+
+    const velocidad = 5;
+
+    // Durante la cuenta, solamente los escondidos se mueven.
+    const buscadorDebeContar =
+        faseActual === "cuenta" &&
+        miRol === "buscador";
+
+    const fasePermiteMovimiento =
+        faseActual === "cuenta" ||
+        faseActual === "busqueda";
+
+    const puedeMoverse =
+        fasePermiteMovimiento &&
+        !buscadorDebeContar &&
+        !partidaTerminada;
+
+    if (puedeMoverse) {
+        let nuevoX = miJugador.x;
+        let nuevoY = miJugador.y;
+
+        const arriba = teclas["w"] === true;
+        const abajo = teclas["s"] === true;
+        const izquierda = teclas["a"] === true;
+        const derecha = teclas["d"] === true;
+
+        if (arriba && !abajo) nuevoY -= velocidad;
+        if (abajo && !arriba) nuevoY += velocidad;
+        if (izquierda && !derecha) nuevoX -= velocidad;
+        if (derecha && !izquierda) nuevoX += velocidad;
+
+        const dxDireccion =
+            (derecha ? 1 : 0) - (izquierda ? 1 : 0);
+
+        const dyDireccion =
+            (abajo ? 1 : 0) - (arriba ? 1 : 0);
+
+        if (dxDireccion !== 0 || dyDireccion !== 0) {
+            const longitud =
+                Math.hypot(dxDireccion, dyDireccion) || 1;
+
+            direccionJugador = {
+                x: dxDireccion / longitud,
+                y: dyDireccion / longitud
+            };
+        }
+
+        nuevoX = Math.max(
+            RADIO_JUGADOR,
+            Math.min(2100 - RADIO_JUGADOR, nuevoX)
+        );
+
+        nuevoY = Math.max(
+            RADIO_JUGADOR,
+            Math.min(1350 - RADIO_JUGADOR, nuevoY)
+        );
+
+        if (
+            nuevoX !== miJugador.x ||
+            nuevoY !== miJugador.y
+        ) {
+            moverJugador(nuevoX, nuevoY);
+
+            socket.emit("moverJugador", {
+                x: miJugador.x,
+                y: miJugador.y
             });
         }
+    }
 
-        function crearTramoHorizontal(x1, x2, y) {
-            if (x2 <= x1) return;
+    renderizarJugadorLocal();
+    actualizarCamara();
+    actualizarHabitacion();
+    dibujarMinimapa();
 
-            crearPared(
-                x1,
-                y,
-                x2 - x1,
-                GROSOR_PARED
-            );
+    requestAnimationFrame(actualizarMovimiento);
+}
+
+/* =====================================
+   CAMARA
+===================================== */
+
+function actualizarCamara() {
+    if (!camara || !mapa || !miJugador) return;
+
+    // El buscador no ve nada mientras cuenta.
+    const camaraBloqueada =
+        miRol === "buscador" &&
+        faseActual === "cuenta";
+
+    camara.classList.toggle(
+        "camara-negra",
+        camaraBloqueada
+    );
+
+    minimapaContenedor.style.display =
+        camaraBloqueada ? "none" : "block";
+
+    habitacionActual.style.display =
+        camaraBloqueada ? "none" : "block";
+
+    if (camaraBloqueada) {
+        return;
+    }
+
+    const anchoVisible = camara.clientWidth;
+    const altoVisible = camara.clientHeight;
+
+    let zoom = 1;
+
+    // El buscador tiene visión reducida durante la búsqueda.
+    if (miRol === "buscador" && faseActual === "busqueda") {
+        zoom = 2;
+    }
+    else if (detectarHabitacion()) {
+        zoom = 1.35;
+    }
+
+    let izquierda =
+        anchoVisible / 2 - miJugador.x * zoom;
+
+    let arriba =
+        altoVisible / 2 - miJugador.y * zoom;
+
+    const anchoMapa = 2100 * zoom;
+    const altoMapa = 1350 * zoom;
+
+    izquierda = Math.min(
+        0,
+        Math.max(anchoVisible - anchoMapa, izquierda)
+    );
+
+    arriba = Math.min(
+        0,
+        Math.max(altoVisible - altoMapa, arriba)
+    );
+
+    mapa.style.left = izquierda + "px";
+    mapa.style.top = arriba + "px";
+    mapa.style.transformOrigin = "top left";
+    mapa.style.transform = `scale(${zoom})`;
+}
+
+/* =====================================
+   HABITACION ACTUAL
+===================================== */
+
+function detectarHabitacion() {
+    const x = miJugador.x / ESCALA_MAPA;
+    const y = miJugador.y / ESCALA_MAPA;
+
+    if (x >= 64 && x <= 386 && y >= 64 && y <= 336)
+        return "Sala de estar";
+
+    if (x >= 539 && x <= 861 && y >= 64 && y <= 336)
+        return "Cocina";
+
+    if (x >= 1064 && x <= 1336 && y >= 64 && y <= 336)
+        return "Dormitorio";
+
+    if (x >= 64 && x <= 386 && y >= 514 && y <= 836)
+        return "Biblioteca";
+
+    if (x >= 539 && x <= 861 && y >= 514 && y <= 836)
+        return "Sala central";
+
+    if (x >= 1064 && x <= 1336 && y >= 514 && y <= 836)
+        return "Sala de juegos";
+
+    return null;
+}
+
+function actualizarHabitacion() {
+    const habitacion = detectarHabitacion();
+
+    habitacionActual.textContent =
+        habitacion
+            ? "Habitación: " + habitacion
+            : "Pasillo";
+}
+
+/* =====================================
+   MINIMAPA
+===================================== */
+
+function dibujarMinimapa() {
+    if (!contextoMinimapa || !minimapa) return;
+
+    const ctx = contextoMinimapa;
+    const ancho = minimapa.width;
+    const alto = minimapa.height;
+
+    const escalaX = ancho / 2100;
+    const escalaY = alto / 1350;
+
+    ctx.clearRect(0, 0, ancho, alto);
+
+    ctx.fillStyle = "#30343b";
+    ctx.fillRect(0, 0, ancho, alto);
+
+    const habitaciones = [
+        { x: 75, y: 75, w: 525, h: 450 },
+        { x: 788, y: 75, w: 525, h: 450 },
+        { x: 1575, y: 75, w: 450, h: 450 },
+        { x: 75, y: 750, w: 525, h: 525 },
+        { x: 788, y: 750, w: 525, h: 525 },
+        { x: 1575, y: 750, w: 450, h: 525 }
+    ];
+
+    ctx.fillStyle = "#737b83";
+    ctx.strokeStyle = "#d4d8dc";
+    ctx.lineWidth = 1;
+
+    for (const h of habitaciones) {
+        ctx.fillRect(
+            h.x * escalaX,
+            h.y * escalaY,
+            h.w * escalaX,
+            h.h * escalaY
+        );
+
+        ctx.strokeRect(
+            h.x * escalaX,
+            h.y * escalaY,
+            h.w * escalaX,
+            h.h * escalaY
+        );
+    }
+
+    const pasillos = [
+        { x: 600, y: 262, w: 188, h: 120 },
+        { x: 1313, y: 262, w: 262, h: 120 },
+        { x: 262, y: 525, w: 120, h: 225 },
+        { x: 850, y: 525, w: 120, h: 225 },
+        { x: 1313, y: 525, w: 262, h: 120 },
+        { x: 600, y: 937, w: 188, h: 120 },
+        { x: 1313, y: 937, w: 262, h: 120 }
+    ];
+
+    ctx.fillStyle = "#555d65";
+
+    for (const p of pasillos) {
+        ctx.fillRect(
+            p.x * escalaX,
+            p.y * escalaY,
+            p.w * escalaX,
+            p.h * escalaY
+        );
+    }
+
+    // Marcador propio.
+    const x = miJugador.x * escalaX;
+    const y = miJugador.y * escalaY;
+
+    ctx.fillStyle =
+        miRol === "buscador" ? "#ffb703" : "#36a2ff";
+
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(
+        x + direccionJugador.x * 9,
+        y + direccionJugador.y * 9
+    );
+    ctx.stroke();
+
+    // Jugadores de la sala.
+    for (const jugador of jugadoresActuales) {
+        if (
+            jugador.id === miId ||
+            jugador.visible === false ||
+            jugador.atrapado
+        ) {
+            continue;
         }
 
-        function crearTramoVertical(y1, y2, x) {
-            if (y2 <= y1) return;
-
-            crearPared(
-                x,
-                y1,
-                GROSOR_PARED,
-                y2 - y1
-            );
+        // Los escondidos no ven al buscador en el minimapa.
+        if (
+            miRol === "escondido" &&
+            jugador.rol === "buscador"
+        ) {
+            continue;
         }
 
-        function crearHabitacion(fila, columna, indice) {
-            const x = 50 + columna * PASO;
-            const y = 50 + fila * FILA;
+        ctx.fillStyle =
+            jugador.rol === "buscador"
+                ? "#ffb703"
+                : "#ff4d6d";
 
-            const habitacion = document.createElement("div");
+        ctx.beginPath();
 
-            habitacion.className = "habitacion";
-            habitacion.style.left = x + "px";
-            habitacion.style.top = y + "px";
+        ctx.arc(
+            jugador.x * escalaX,
+            jugador.y * escalaY,
+            3,
+            0,
+            Math.PI * 2
+        );
 
-            const titulo = document.createElement("div");
+        ctx.fill();
+    }
 
-            titulo.className = "nombre-habitacion";
-            titulo.textContent = habitaciones[indice];
+    ctx.strokeStyle = "rgba(255,255,255,.75)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0.5, 0.5, ancho - 1, alto - 1);
+}
 
-            habitacion.appendChild(titulo);
-            mundo.appendChild(habitacion);
+/* =====================================
+   RESULTADO
+===================================== */
 
-            const centroX = x + ANCHO_HAB / 2;
-            const centroY = y + ALTO_HAB / 2;
-            const mitadPuerta = ANCHO_PUERTA / 2;
+function mostrarResultado(estado) {
+    if (partidaTerminada) return;
 
-            // Pared superior.
-            if (fila > 0) {
-                crearTramoHorizontal(
-                    x,
-                    centroX - mitadPuerta,
-                    y
-                );
+    partidaTerminada = true;
+    detenerMusica();
 
-                crearTramoHorizontal(
-                    centroX + mitadPuerta,
-                    x + ANCHO_HAB,
-                    y
-                );
-            } else {
-                crearTramoHorizontal(
-                    x,
-                    x + ANCHO_HAB,
-                    y
-                );
-            }
+    tituloResultado.textContent =
+        estado.ganador === "buscador"
+            ? "¡EL BUSCADOR GANÓ!"
+            : "¡LOS ESCONDIDOS GANARON!";
 
-            // Pared inferior.
-            if (fila < 2) {
-                crearTramoHorizontal(
-                    x,
-                    centroX - mitadPuerta,
-                    y + ALTO_HAB - GROSOR_PARED
-                );
+    textoResultado.textContent =
+        estado.mensajeFinal || "La partida terminó.";
 
-                crearTramoHorizontal(
-                    centroX + mitadPuerta,
-                    x + ANCHO_HAB,
-                    y + ALTO_HAB - GROSOR_PARED
-                );
-            } else {
-                crearTramoHorizontal(
-                    x,
-                    x + ANCHO_HAB,
-                    y + ALTO_HAB - GROSOR_PARED
-                );
-            }
+    overlayPartida.style.display = "flex";
+}
 
-            // Pared izquierda.
-            if (columna > 0) {
-                crearTramoVertical(
-                    y,
-                    centroY - mitadPuerta,
-                    x
-                );
+volverMenu.addEventListener("click", () => {
+    location.reload();
+});
 
-                crearTramoVertical(
-                    centroY + mitadPuerta,
-                    y + ALTO_HAB,
-                    x
-                );
-            } else {
-                crearTramoVertical(
-                    y,
-                    y + ALTO_HAB,
-                    x
-                );
-            }
+/* =====================================
+   ERRORES
+===================================== */
 
-            // Pared derecha.
-            if (columna < 2) {
-                crearTramoVertical(
-                    y,
-                    centroY - mitadPuerta,
-                    x + ANCHO_HAB - GROSOR_PARED
-                );
+socket.on("errorSala", texto => {
+    mensaje.textContent = texto;
+});
 
-                crearTramoVertical(
-                    centroY + mitadPuerta,
-                    y + ALTO_HAB,
-                    x + ANCHO_HAB - GROSOR_PARED
-                );
-            } else {
-                crearTramoVertical(
-                    y,
-                    y + ALTO_HAB,
-                    x + ANCHO_HAB - GROSOR_PARED
-                );
-            }
+/* INICIAR BUCLE */
 
-            // Muebles decorativos.
-            const muebles = [
-                { dx: 70, dy: 90, w: 90, h: 45 },
-                { dx: 370, dy: 270, w: 110, h: 50 }
-            ];
-
-            muebles.forEach(m => {
-                const el = document.createElement("div");
-
-                el.className = "mueble";
-                el.style.left = (x + m.dx) + "px";
-                el.style.top = (y + m.dy) + "px";
-                el.style.width = m.w + "px";
-                el.style.height = m.h + "px";
-
-                mundo.appendChild(el);
-            });
-        }
-
-        function crearMapa() {
-            mundo.innerHTML = "";
-            paredes.length = 0;
-
-            for (let fila = 0; fila < 3; fila++) {
-                for (let columna = 0; columna < 3; columna++) {
-                    crearHabitacion(
-                        fila,
-                        columna,
-                        fila * 3 + columna
-                    );
-                }
-            }
-        }
-
-        function colisiona(x, y) {
-            const radio = 15;
-
-            if (
-                x - radio < 0 ||
-                y - radio < 0 ||
-                x + radio > ANCHO_MAPA ||
-                y + radio > ALTO_MAPA
-            ) {
-                return true;
-            }
-
-            return paredes.some(p => {
-                return (
-                    x + radio > p.x &&
-                    x - radio < p.x + p.ancho &&
-                    y + radio > p.y &&
-                    y - radio < p.y + p.alto
-                );
-            });
-        }
-
-        function crearJugadorElemento(jugador) {
-            const el = document.createElement("div");
-
-            el.className = "jugador";
-            el.dataset.id = jugador.id;
-
-            el.innerHTML = `
-                <div class="nombre-jugador"></div>
-                <div class="pelo"></div>
-                <div class="cabeza"></div>
-                <div class="cuerpo"></div>
-                <div class="brazo izquierdo"></div>
-                <div class="brazo derecho"></div>
-                <div class="pierna izquierda"></div>
-                <div class="pierna derecha"></div>
-            `;
-
-            mundo.appendChild(el);
-            elementosJugadores.set(jugador.id, el);
-
-            return el;
-        }
-
-        function distancia(a, b) {
-            return Math.hypot(
-                a.x - b.x,
-                a.y - b.y
-            );
-        }
-
-        function actualizarJugadores() {
-            const yo = jugadores.find(j => j.id === miId);
-
-            if (yo) {
-                rol = yo.rol;
-
-                // CORRECCIÓN:
-                // Solo aceptamos nuestra posición del servidor
-                // al comenzar la ronda. Después conservamos la local.
-                if (
-                    fase === "contando" &&
-                    !posicionInicializada
-                ) {
-                    posicion.x = yo.x;
-                    posicion.y = yo.y;
-                    posicionInicializada = true;
-                }
-            }
-
-            // Si volvemos a esperar una nueva partida,
-            // permitimos recibir una nueva posición inicial.
-            if (fase === "esperando") {
-                posicionInicializada = false;
-            }
-
-            const visibles = new Set();
-
-            jugadores.forEach(j => {
-                const atrapado = j.atrapado === true;
-
-                // El buscador no ve a los escondidos que están lejos.
-                if (
-                    rol === "buscador" &&
-                    j.rol === "escondido" &&
-                    !atrapado &&
-                    distancia(posicion, j) > 280
-                ) {
-                    return;
-                }
-
-                visibles.add(j.id);
-
-                let el = elementosJugadores.get(j.id);
-
-                if (!el) {
-                    el = crearJugadorElemento(j);
-                }
-
-                // Para nuestro personaje usamos la posición local.
-                // Para los demás usamos la posición del servidor.
-                if (j.id === miId) {
-                    el.style.left = posicion.x + "px";
-                    el.style.top = posicion.y + "px";
-                } else {
-                    el.style.left = j.x + "px";
-                    el.style.top = j.y + "px";
-                }
-
-                el.classList.toggle("propio", j.id === miId);
-                el.classList.toggle("buscador", j.rol === "buscador");
-                el.classList.toggle("atrapado", atrapado);
-
-                el.querySelector(".nombre-jugador").textContent =
-                    j.nombre + (atrapado ? " (atrapado)" : "");
-            });
-
-            for (const [id, el] of elementosJugadores) {
-                if (!visibles.has(id)) {
-                    el.remove();
-                    elementosJugadores.delete(id);
-                }
-            }
-
-            oscuridad.style.display =
-                rol === "buscador" && fase === "buscando"
-                    ? "block"
-                    : "none";
-
-            dibujarMinimapa();
-            moverCamara();
-        }
-
-        function moverCamara() {
-            const ancho = area.clientWidth;
-            const alto = area.clientHeight;
-
-            const camX = Math.max(
-                0,
-                Math.min(
-                    ANCHO_MAPA - ancho,
-                    posicion.x - ancho / 2
-                )
-            );
-
-            const camY = Math.max(
-                0,
-                Math.min(
-                    ALTO_MAPA - alto,
-                    posicion.y - alto / 2
-                )
-            );
-
-            mundo.style.left = -camX + "px";
-            mundo.style.top = -camY + "px";
-
-            // La luz del buscador queda centrada en la pantalla.
-            oscuridad.style.background = `
-                radial-gradient(
-                    circle 250px at
-                    ${posicion.x - camX}px
-                    ${posicion.y - camY}px,
-                    transparent 0 65%,
-                    rgba(0, 0, 0, 0.96) 100%
-                )
-            `;
-        }
-
-        function dibujarMinimapa() {
-            const w = minimapa.width;
-            const h = minimapa.height;
-
-            ctx.clearRect(0, 0, w, h);
-
-            ctx.fillStyle = "#26372b";
-            ctx.fillRect(0, 0, w, h);
-
-            const sx = w / ANCHO_MAPA;
-            const sy = h / ALTO_MAPA;
-
-            for (let fila = 0; fila < 3; fila++) {
-                for (let columna = 0; columna < 3; columna++) {
-                    ctx.fillStyle = "#8a7b62";
-
-                    ctx.fillRect(
-                        (50 + columna * PASO) * sx,
-                        (50 + fila * FILA) * sy,
-                        ANCHO_HAB * sx,
-                        ALTO_HAB * sy
-                    );
-                }
-            }
-
-            jugadores.forEach(j => {
-                if (
-                    rol === "buscador" &&
-                    j.rol === "escondido" &&
-                    !j.atrapado &&
-                    distancia(posicion, j) > 280
-                ) {
-                    return;
-                }
-
-                ctx.fillStyle = j.id === miId
-                    ? "#00d9ff"
-                    : j.rol === "buscador"
-                        ? "#ff3030"
-                        : j.atrapado
-                            ? "#999999"
-                            : "#ffee55";
-
-                ctx.beginPath();
-
-                ctx.arc(
-                    j.id === miId ? posicion.x * sx : j.x * sx,
-                    j.id === miId ? posicion.y * sy : j.y * sy,
-                    5,
-                    0,
-                    Math.PI * 2
-                );
-
-                ctx.fill();
-            });
-        }
-
-        function reproducirMusica(nombreArchivo) {
-            if (!nombreArchivo) return;
-
-            // No reiniciar la misma canción cada vez que llega el estado.
-            if (musica.src.endsWith(nombreArchivo)) return;
-
-            musica.src = nombreArchivo;
-            musica.volume = 0.35;
-
-            musica.play().catch(() => {
-                // El navegador puede esperar una interacción del usuario.
-            });
-        }
-
-        function entrarAlJuego(codigo) {
-            codigoSala = codigo;
-
-            menu.style.display = "none";
-            juego.style.display = "block";
-
-            salaInfo.textContent = "Sala: " + codigo;
-
-            crearMapa();
-            moverCamara();
-        }
-
-        document.getElementById("crear").addEventListener("click", () => {
-            const nombre = document
-                .getElementById("nombre")
-                .value.trim();
-
-            if (!nombre) {
-                mensajeMenu.textContent =
-                    "Escribí tu nombre antes de crear la sala.";
-                return;
-            }
-
-            socket.emit("crearSala", { nombre }, respuesta => {
-                if (!respuesta || !respuesta.ok) {
-                    mensajeMenu.textContent =
-                        respuesta?.mensaje || "No se pudo crear la sala.";
-                    return;
-                }
-
-                miId = socket.id;
-                posicionInicializada = false;
-
-                entrarAlJuego(respuesta.codigo);
-            });
-        });
-
-        document.getElementById("unirse").addEventListener("click", () => {
-            const nombre = document
-                .getElementById("nombre")
-                .value.trim();
-
-            const codigo = document
-                .getElementById("codigo")
-                .value.trim()
-                .toUpperCase();
-
-            if (!nombre || !codigo) {
-                mensajeMenu.textContent =
-                    "Ingresá tu nombre y el código de sala.";
-                return;
-            }
-
-            socket.emit(
-                "unirseSala",
-                { nombre, codigo },
-                respuesta => {
-                    if (!respuesta || !respuesta.ok) {
-                        mensajeMenu.textContent =
-                            respuesta?.mensaje || "No se pudo entrar a la sala.";
-                        return;
-                    }
-
-                    miId = socket.id;
-                    posicionInicializada = false;
-
-                    entrarAlJuego(respuesta.codigo);
-                }
-            );
-        });
-
-        socket.on("estadoSala", datos => {
-            jugadores = datos.jugadores || [];
-            fase = datos.fase || "esperando";
-            tiempoRestante = datos.tiempoRestante ?? 0;
-
-            estado.textContent =
-                datos.mensaje || "Esperando jugadores...";
-
-            reloj.textContent = fase === "esperando"
-                ? jugadores.length + "/4 jugadores"
-                : tiempoRestante + " s";
-
-            if (datos.musica) {
-                reproducirMusica(datos.musica);
-            }
-
-            actualizarJugadores();
-        });
-
-        socket.on("finPartida", datos => {
-            finPartida = true;
-            fase = "terminada";
-
-            resultado.style.display = "flex";
-
-            document.getElementById("texto-resultado").textContent =
-                datos.titulo || "Fin de la partida";
-
-            document.getElementById("detalle-resultado").textContent =
-                datos.detalle || "";
-
-            musica.pause();
-        });
-
-        socket.on("errorSala", mensaje => {
-            mensajeMenu.textContent = mensaje;
-        });
-
-        window.addEventListener("keydown", e => {
-            const tecla = e.key.toLowerCase();
-
-            if (
-                [
-                    "arrowup",
-                    "arrowdown",
-                    "arrowleft",
-                    "arrowright",
-                    " "
-                ].includes(tecla)
-            ) {
-                e.preventDefault();
-            }
-
-            teclas[tecla] = true;
-        });
-
-        window.addEventListener("keyup", e => {
-            teclas[e.key.toLowerCase()] = false;
-        });
-
-        window.addEventListener("blur", () => {
-            teclas = {};
-        });
-
-        function actualizarMovimiento() {
-            requestAnimationFrame(actualizarMovimiento);
-
-            if (
-                !miId ||
-                finPartida ||
-                !["contando", "buscando"].includes(fase)
-            ) {
-                return;
-            }
-
-            let dx = 0;
-            let dy = 0;
-
-            if (teclas["w"] || teclas["arrowup"]) dy -= 1;
-            if (teclas["s"] || teclas["arrowdown"]) dy += 1;
-            if (teclas["a"] || teclas["arrowleft"]) dx -= 1;
-            if (teclas["d"] || teclas["arrowright"]) dx += 1;
-
-            if (dx === 0 && dy === 0) {
-                return;
-            }
-
-            const largo = Math.hypot(dx, dy);
-
-            dx /= largo;
-            dy /= largo;
-
-            const velocidad = 3.2;
-
-            const nuevoX = posicion.x + dx * velocidad;
-            const nuevoY = posicion.y + dy * velocidad;
-
-            // Comprobar X e Y por separado para permitir deslizarse
-            // junto a las paredes.
-            if (!colisiona(nuevoX, posicion.y)) {
-                posicion.x = nuevoX;
-            }
-
-            if (!colisiona(posicion.x, nuevoY)) {
-                posicion.y = nuevoY;
-            }
-
-            // Actualizar nuestro personaje sin esperar al servidor.
-            const miElemento = elementosJugadores.get(miId);
-
-            if (miElemento) {
-                miElemento.style.left = posicion.x + "px";
-                miElemento.style.top = posicion.y + "px";
-            }
-
-            moverCamara();
-            dibujarMinimapa();
-
-            const ahora = performance.now();
-
-            if (ahora - ultimoEnvio > 45) {
-                ultimoEnvio = ahora;
-
-                socket.emit("moverJugador", {
-                    x: posicion.x,
-                    y: posicion.y
-                });
-            }
-        }
-
-        crearMapa();
-        actualizarMovimiento();
-
-        window.addEventListener("resize", moverCamara);
-    </script>
+actualizarMovimiento();
+</script>
 
 </body>
 </html>
