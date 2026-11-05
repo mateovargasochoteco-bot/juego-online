@@ -164,7 +164,6 @@ function iniciarPartida(codigo) {
     if (!sala || sala.jugadores.size !== 4) return;
 
     const jugadores = [...sala.jugadores.values()];
-
     const buscadorIndex = Math.floor(Math.random() * jugadores.length);
 
     jugadores.forEach((jugador, index) => {
@@ -294,7 +293,6 @@ io.on("connection", socket => {
         });
 
         socket.emit("unidoSala", codigo);
-
         enviarEstado(codigo);
 
         if (sala.jugadores.size === 4) {
@@ -319,10 +317,12 @@ io.on("connection", socket => {
 
         if (!Number.isFinite(nuevoX) || !Number.isFinite(nuevoY)) return;
 
-        const distancia = Math.hypot(nuevoX - jugador.x, nuevoY - jugador.y);
+        const distancia = Math.hypot(
+            nuevoX - jugador.x,
+            nuevoY - jugador.y
+        );
 
         if (distancia > 15) return;
-
         if (!dentroDeZona(nuevoX, nuevoY)) return;
 
         if (cruzaPared(jugador.x, jugador.y, nuevoX, nuevoY)) return;
@@ -330,7 +330,6 @@ io.on("connection", socket => {
         jugador.x = nuevoX;
         jugador.y = nuevoY;
 
-        // Recoger estrellas.
         if (jugador.rol === "escondido" && sala.fase === "busqueda") {
             for (const objeto of sala.objetos) {
                 if (objeto.recogido) continue;
@@ -348,7 +347,10 @@ io.on("connection", socket => {
                     });
 
                     if (sala.objetos.every(o => o.recogido)) {
-                        terminarPartida(codigo, "¡LOS ESCONDIDOS COMPLETARON EL OBJETIVO!");
+                        terminarPartida(
+                            codigo,
+                            "¡LOS ESCONDIDOS COMPLETARON EL OBJETIVO!"
+                        );
                         return;
                     }
                 }
