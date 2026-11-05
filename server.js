@@ -1,268 +1,298 @@
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
+const path = require("path");
 
 const app = express();
 const servidor = http.createServer(app);
 const io = new Server(servidor);
 
-const PORT = 3000;
-
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
 const salas = new Map();
 
-const TIEMPO_CUENTA = 15;
-const TIEMPO_BUSQUEDA = 200;
+const ANCHO_MAPA = 1450;
+const ALTO_MAPA = 1200;
+const MAX_JUGADORES = 4;
 
 function generarCodigo() {
-    const letras = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const caracteres = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     let codigo = "";
 
     for (let i = 0; i < 5; i++) {
-        codigo += letras[Math.floor(Math.random() * letras.length)];
+        codigo += caracteres[Math.floor(Math.random() * caracteres.length)];
     }
 
     return codigo;
 }
 
-function crearObjetos() {
-    return [
-        {id: 1, x: 200, y: 200, recogido: false},
-        {id: 2, x: 700, y: 600, recogido: false},
-        {id: 3, x: 1200, y: 1000, recogido: false}
-    ];
+// --------------------------------------------------
+// ZONAS POR LAS QUE SE PUEDE CAMINAR
+// --------------------------------------------------
+
+function crearZonasTransitables() {
+    const zonas = [];
+
+    // Habitaciones
+    for (let fila = 0; fila < 3; fila++) {
+        for (let columna = 0; columna < 3; columna++) {
+            const x = 50 + columna * 500;
+            const y = 50 + fila * 400;
+
+            zonas.push({
+                x: x + 13,
+                y: y + 13,
+                ancho: 324,
+                alto: 274
+            });
+        }
+    }
+
+    // Pasillos horizontales
+    for (let fila = 0; fila < 3; fila++) {
+        const y = 155 + fila * 400;
+
+        for (let columna = 0; columna < 2; columna++) {
+            const x = 400 + columna * 500;
+
+            zonas.push({
+                x,
+                y,
+                ancho: 150,
+                alto: 90
+            });
+        }
+    }
+
+    // Pasillos verticales
+    for (let columna = 0; columna < 3; columna++) {
+        const x = 180 + columna * 500;
+
+        for (let fila = 0; fila < 2; fila++) {
+            const y = 350 + fila * 400;
+
+            zonas.push({
+                x,
+                y,
+                ancho: 90,
+                alto: 100
+            });
+        }
+    }
+
+    // Conexiones horizontales entre habitaciones y pasillos
+    for (let fila = 0; fila < 3; fila++) {
+        const centroY = 200 + fila * 400;
+
+        for (let columna = 0; columna < 2; columna++) {
+            const izquierda = 50 + columna * 500;
+
+            zonas.push({
+                x: izquierda + 337,
+                y: centroY - 24,
+                ancho: 26,
+                alto: 48
+            });
+
+            zonas.push({
+                x: izquierda + 487,
+                y: centroY - 24,
+                ancho: 26,
+                alto: 48
+            });
+        }
+    }
+
+    // Conexiones verticales entre habitaciones y pasillos
+    for (let columna = 0; columna < 3; columna++) {
+        const izquierda = 50 + columna * 500;
+        const centroX = izquierda + 175;
+
+        for (let fila = 0; fila < 2; fila++) {
+            const arriba = 50 + fila * 400;
+
+            zonas.push({
+                x: centroX - 24,
+                y: arriba + 287,
+                ancho: 48,
+                alto: 26
+            });
+
+            zonas.push({
+                x: centroX - 24,
+                y: arriba + 387,
+                ancho: 48,
+                alto: 26
+            });
+        }
+    }
+
+    return zonas;
 }
 
-function crearJugadoresIniciales() {
-    return [
-        {x: 150, y: 150},
-        {x: 650, y: 150},
-        {x: 1150, y: 150},
-        {x: 650, y: 950}
-    ];
-}
+const zonasTransitables = crearZonasTransitables();
 
 function dentroDeZona(x, y) {
-    const habitaciones = [
-        {x:50,y:50}, {x:550,y:50}, {x:1050,y:50},
-        {x:50,y:450}, {x:550,y:450}, {x:1050,y:450},
-        {x:50,y:850}, {x:550,y:850}, {x:1050,y:850}
-    ];
-
-    for (const h of habitaciones) {
-        if (x >= h.x + 13 && x <= h.x + 337 &&
-            y >= h.y + 13 && y <= h.y + 287) {
-            return true;
-        }
-    }
-
-    for (let fila = 0; fila < 3; fila++) {
-        for (let col = 0; col < 2; col++) {
-            const cx = 400 + col * 500;
-            const cy = 155 + fila * 400;
-
-            if (x >= cx && x <= cx + 150 &&
-                y >= cy && y <= cy + 90) {
-                return true;
-            }
-        }
-    }
-
-    for (let fila = 0; fila < 2; fila++) {
-        for (let col = 0; col < 3; col++) {
-            const cx = 180 + col * 500;
-            const cy = 350 + fila * 400;
-
-            if (x >= cx && x <= cx + 90 &&
-                y >= cy && y <= cy + 100) {
-                return true;
-            }
-        }
-    }
-
-    return false;
+    return zonasTransitables.some(zona =>
+        x >= zona.x &&
+        x <= zona.x + zona.ancho &&
+        y >= zona.y &&
+        y <= zona.y + zona.alto
+    );
 }
 
-function cruzaPared(ax, ay, bx, by) {
-    const habitaciones = [
-        {x:50,y:50}, {x:550,y:50}, {x:1050,y:50},
-        {x:50,y:450}, {x:550,y:450}, {x:1050,y:450},
-        {x:50,y:850}, {x:550,y:850}, {x:1050,y:850}
-    ];
+// --------------------------------------------------
+// CREAR SALA
+// --------------------------------------------------
 
-    for (const h of habitaciones) {
-        const izquierda = h.x + 13;
-        const derecha = h.x + 337;
-        const arriba = h.y + 13;
-        const abajo = h.y + 287;
+function crearSala(socket) {
+    let codigo = generarCodigo();
 
-        if (ax <= derecha && bx > derecha) {
-            if (Math.abs(by - (h.y + 150)) > 24) return true;
-        }
-
-        if (ax > derecha && bx <= derecha) {
-            if (Math.abs(by - (h.y + 150)) > 24) return true;
-        }
-
-        if (ax >= izquierda && bx < izquierda) {
-            if (Math.abs(by - (h.y + 150)) > 24) return true;
-        }
-
-        if (ax < izquierda && bx >= izquierda) {
-            if (Math.abs(by - (h.y + 150)) > 24) return true;
-        }
-
-        if (ay >= arriba && by < arriba) {
-            if (Math.abs(bx - (h.x + 175)) > 24) return true;
-        }
-
-        if (ay <= abajo && by > abajo) {
-            if (Math.abs(bx - (h.x + 175)) > 24) return true;
-        }
-
-        if (ay < arriba && by >= arriba) {
-            if (Math.abs(bx - (h.x + 175)) > 24) return true;
-        }
-
-        if (ay > abajo && by <= abajo) {
-            if (Math.abs(bx - (h.x + 175)) > 24) return true;
-        }
+    while (salas.has(codigo)) {
+        codigo = generarCodigo();
     }
 
-    return false;
+    const sala = {
+        jugadores: new Map(),
+        fase: "esperando",
+        tiempo: 200,
+        cuenta: 15,
+        buscador: null,
+        estrellas: [
+            { id: 1, x: 220, y: 200, recogida: false },
+            { id: 2, x: 720, y: 600, recogida: false },
+            { id: 3, x: 1220, y: 1000, recogida: false }
+        ],
+        intervalo: null
+    };
+
+    salas.set(codigo, sala);
+
+    socket.join(codigo);
+    socket.sala = codigo;
+
+    sala.jugadores.set(socket.id, {
+        id: socket.id,
+        x: 200,
+        y: 200,
+        rol: null,
+        atrapado: false
+    });
+
+    socket.emit("salaCreada", codigo);
+
+    return codigo;
 }
+
+// --------------------------------------------------
+// ESTADO DE LA SALA
+// --------------------------------------------------
 
 function enviarEstado(codigo) {
     const sala = salas.get(codigo);
+
     if (!sala) return;
 
-    for (const [id, jugador] of sala.jugadores) {
-        io.to(id).emit("estadoSala", {
-            jugadores: Object.fromEntries(sala.jugadores),
-            objetos: sala.objetos,
-            fase: sala.fase,
-            miRol: jugador.rol
-        });
-    }
+    io.to(codigo).emit("estadoSala", {
+        jugadores: Array.from(sala.jugadores.values()),
+        fase: sala.fase,
+        tiempo: sala.tiempo,
+        cuenta: sala.cuenta,
+        buscador: sala.buscador,
+        estrellas: sala.estrellas
+    });
 }
 
-function terminarPartida(codigo, ganador) {
-    const sala = salas.get(codigo);
-    if (!sala || sala.fase === "terminada") return;
-
-    sala.fase = "terminada";
-
-    clearInterval(sala.intervaloCuenta);
-    clearInterval(sala.intervaloBusqueda);
-
-    io.to(codigo).emit("finPartida", ganador);
-}
+// --------------------------------------------------
+// INICIAR PARTIDA
+// --------------------------------------------------
 
 function iniciarPartida(codigo) {
     const sala = salas.get(codigo);
-    if (!sala || sala.jugadores.size !== 4) return;
 
-    const jugadores = [...sala.jugadores.values()];
-    const buscadorIndex = Math.floor(Math.random() * jugadores.length);
+    if (!sala || sala.jugadores.size !== MAX_JUGADORES) return;
 
-    jugadores.forEach((jugador, index) => {
-        jugador.rol = index === buscadorIndex ? "buscador" : "escondido";
+    const jugadores = Array.from(sala.jugadores.values());
+    const indiceBuscador = Math.floor(Math.random() * jugadores.length);
+
+    sala.buscador = jugadores[indiceBuscador].id;
+
+    jugadores.forEach(jugador => {
+        jugador.rol = jugador.id === sala.buscador
+            ? "buscador"
+            : "escondido";
+
         jugador.atrapado = false;
     });
 
     sala.fase = "cuenta";
-    sala.tiempo = TIEMPO_CUENTA;
-    sala.objetos = crearObjetos();
+    sala.cuenta = 15;
+    sala.tiempo = 200;
 
-    const posiciones = crearJugadoresIniciales();
-
-    jugadores.forEach((jugador, index) => {
-        jugador.x = posiciones[index].x;
-        jugador.y = posiciones[index].y;
+    sala.estrellas.forEach(estrella => {
+        estrella.recogida = false;
     });
 
-    io.to(codigo).emit("inicioCuenta");
     enviarEstado(codigo);
 
-    sala.intervaloCuenta = setInterval(() => {
-        sala.tiempo--;
+    clearInterval(sala.intervalo);
 
-        io.to(codigo).emit("cuentaActualizada", sala.tiempo);
+    sala.intervalo = setInterval(() => {
+        if (sala.fase === "cuenta") {
+            sala.cuenta--;
 
-        if (sala.tiempo <= 0) {
-            clearInterval(sala.intervaloCuenta);
+            if (sala.cuenta <= 0) {
+                sala.fase = "jugando";
+                enviarEstado(codigo);
+            }
 
-            sala.fase = "busqueda";
-            sala.tiempo = TIEMPO_BUSQUEDA;
-
-            io.to(codigo).emit("finCuenta");
             enviarEstado(codigo);
-
-            iniciarTemporizadorBusqueda(codigo);
-        }
-    }, 1000);
-}
-
-function iniciarTemporizadorBusqueda(codigo) {
-    const sala = salas.get(codigo);
-    if (!sala) return;
-
-    sala.intervaloBusqueda = setInterval(() => {
-        if (sala.fase !== "busqueda") {
-            clearInterval(sala.intervaloBusqueda);
             return;
         }
 
-        sala.tiempo--;
+        if (sala.fase === "jugando") {
+            sala.tiempo--;
 
-        io.to(codigo).emit("tiempoActualizado", sala.tiempo);
+            if (sala.tiempo <= 0) {
+                terminarPartida(codigo, "¡Ganaron los escondidos!");
+                return;
+            }
 
-        if (sala.tiempo <= 0) {
-            terminarPartida(codigo, "¡GANAN LOS ESCONDIDOS!");
+            enviarEstado(codigo);
         }
     }, 1000);
 }
 
+// --------------------------------------------------
+// TERMINAR PARTIDA
+// --------------------------------------------------
+
+function terminarPartida(codigo, mensaje) {
+    const sala = salas.get(codigo);
+
+    if (!sala) return;
+
+    sala.fase = "terminada";
+
+    clearInterval(sala.intervalo);
+
+    io.to(codigo).emit("finPartida", mensaje);
+    enviarEstado(codigo);
+}
+
+// --------------------------------------------------
+// CONEXIONES
+// --------------------------------------------------
+
 io.on("connection", socket => {
+    console.log("Jugador conectado:", socket.id);
 
     socket.on("crearSala", () => {
-        let codigo;
-
-        do {
-            codigo = generarCodigo();
-        } while (salas.has(codigo));
-
-        const sala = {
-            jugadores: new Map(),
-            objetos: crearObjetos(),
-            fase: "esperando",
-            tiempo: 0,
-            intervaloCuenta: null,
-            intervaloBusqueda: null
-        };
-
-        salas.set(codigo, sala);
-
-        socket.join(codigo);
-        socket.sala = codigo;
-
-        sala.jugadores.set(socket.id, {
-            id: socket.id,
-            x: 150,
-            y: 150,
-            rol: null,
-            atrapado: false
-        });
-
-        socket.emit("salaCreada", codigo);
-        socket.emit("unidoSala", codigo);
-
-        enviarEstado(codigo);
+        crearSala(socket);
     });
 
     socket.on("unirseSala", codigo => {
-        codigo = String(codigo || "").toUpperCase().trim();
+        codigo = String(codigo).toUpperCase().trim();
 
         const sala = salas.get(codigo);
 
@@ -271,8 +301,8 @@ io.on("connection", socket => {
             return;
         }
 
-        if (sala.jugadores.size >= 4) {
-            socket.emit("errorSala", "La sala está completa.");
+        if (sala.jugadores.size >= MAX_JUGADORES) {
+            socket.emit("errorSala", "La sala está llena.");
             return;
         }
 
@@ -286,19 +316,24 @@ io.on("connection", socket => {
 
         sala.jugadores.set(socket.id, {
             id: socket.id,
-            x: 150,
-            y: 150,
+            x: 200 + Math.random() * 80,
+            y: 200 + Math.random() * 80,
             rol: null,
             atrapado: false
         });
 
         socket.emit("unidoSala", codigo);
+
         enviarEstado(codigo);
 
-        if (sala.jugadores.size === 4) {
+        if (sala.jugadores.size === MAX_JUGADORES) {
             iniciarPartida(codigo);
         }
     });
+
+    // --------------------------------------------------
+    // MOVIMIENTO
+    // --------------------------------------------------
 
     socket.on("moverJugador", datos => {
         const codigo = socket.sala;
@@ -307,98 +342,113 @@ io.on("connection", socket => {
         if (!sala || !datos) return;
 
         const jugador = sala.jugadores.get(socket.id);
+
         if (!jugador || jugador.atrapado) return;
 
-        if (sala.fase === "esperando" || sala.fase === "terminada") return;
-        if (sala.fase === "cuenta" && jugador.rol === "buscador") return;
+        if (sala.fase === "esperando") return;
+
+        if (
+            sala.fase === "cuenta" &&
+            jugador.rol === "buscador"
+        ) {
+            return;
+        }
 
         const nuevoX = Number(datos.x);
         const nuevoY = Number(datos.y);
 
-        if (!Number.isFinite(nuevoX) || !Number.isFinite(nuevoY)) return;
+        if (!Number.isFinite(nuevoX) || !Number.isFinite(nuevoY)) {
+            return;
+        }
 
         const distancia = Math.hypot(
             nuevoX - jugador.x,
             nuevoY - jugador.y
         );
 
+        // Evita saltos de posición demasiado grandes
         if (distancia > 15) return;
-        if (!dentroDeZona(nuevoX, nuevoY)) return;
 
-        if (cruzaPared(jugador.x, jugador.y, nuevoX, nuevoY)) return;
+        // Las paredes bloquean el movimiento
+        if (!dentroDeZona(nuevoX, nuevoY)) return;
 
         jugador.x = nuevoX;
         jugador.y = nuevoY;
 
-        if (jugador.rol === "escondido" && sala.fase === "busqueda") {
-            for (const objeto of sala.objetos) {
-                if (objeto.recogido) continue;
+        // Recoger estrellas
+        if (jugador.rol === "escondido") {
+            sala.estrellas.forEach(estrella => {
+                if (estrella.recogida) return;
 
-                const distanciaObjeto = Math.hypot(
-                    jugador.x - objeto.x,
-                    jugador.y - objeto.y
+                const distanciaEstrella = Math.hypot(
+                    jugador.x - estrella.x,
+                    jugador.y - estrella.y
                 );
 
-                if (distanciaObjeto < 30) {
-                    objeto.recogido = true;
-
-                    io.to(codigo).emit("objetoRecogido", {
-                        objetos: sala.objetos
-                    });
-
-                    if (sala.objetos.every(o => o.recogido)) {
-                        terminarPartida(
-                            codigo,
-                            "¡LOS ESCONDIDOS COMPLETARON EL OBJETIVO!"
-                        );
-                        return;
-                    }
+                if (distanciaEstrella < 25) {
+                    estrella.recogida = true;
                 }
+            });
+
+            if (sala.estrellas.every(e => e.recogida)) {
+                terminarPartida(
+                    codigo,
+                    "¡Los escondidos encontraron todas las estrellas!"
+                );
+                return;
             }
         }
 
         enviarEstado(codigo);
     });
 
-    socket.on("atrapar", () => {
+    // --------------------------------------------------
+    // ATRAPAR JUGADOR
+    // --------------------------------------------------
+
+    socket.on("atraparJugador", idObjetivo => {
         const codigo = socket.sala;
         const sala = salas.get(codigo);
 
-        if (!sala || sala.fase !== "busqueda") return;
+        if (!sala || sala.fase !== "jugando") return;
 
         const buscador = sala.jugadores.get(socket.id);
+        const objetivo = sala.jugadores.get(idObjetivo);
 
-        if (!buscador || buscador.rol !== "buscador") return;
+        if (!buscador || !objetivo) return;
 
-        for (const [id, jugador] of sala.jugadores) {
-            if (jugador.rol !== "escondido" || jugador.atrapado) continue;
+        if (buscador.rol !== "buscador") return;
+        if (objetivo.rol !== "escondido") return;
+        if (objetivo.atrapado) return;
 
-            const distancia = Math.hypot(
-                buscador.x - jugador.x,
-                buscador.y - jugador.y
-            );
+        const distancia = Math.hypot(
+            buscador.x - objetivo.x,
+            buscador.y - objetivo.y
+        );
 
-            if (distancia <= 55) {
-                jugador.atrapado = true;
+        if (distancia > 45) return;
 
-                io.to(codigo).emit("jugadorAtrapado", {
-                    jugadores: Object.fromEntries(sala.jugadores)
-                });
-            }
-        }
+        objetivo.atrapado = true;
 
-        const escondidosRestantes = [...sala.jugadores.values()]
-            .filter(j => j.rol === "escondido" && !j.atrapado);
+        enviarEstado(codigo);
 
-        if (escondidosRestantes.length === 0) {
-            terminarPartida(codigo, "¡GANA EL BUSCADOR!");
-        } else {
-            enviarEstado(codigo);
+        const escondidos = Array.from(sala.jugadores.values())
+            .filter(j => j.rol === "escondido");
+
+        if (escondidos.every(j => j.atrapado)) {
+            terminarPartida(codigo, "¡El buscador atrapó a todos!");
         }
     });
 
+    // --------------------------------------------------
+    // DESCONECTAR
+    // --------------------------------------------------
+
     socket.on("disconnect", () => {
         const codigo = socket.sala;
+
+        if (!codigo) return;
+
         const sala = salas.get(codigo);
 
         if (!sala) return;
@@ -406,15 +456,21 @@ io.on("connection", socket => {
         sala.jugadores.delete(socket.id);
 
         if (sala.jugadores.size === 0) {
-            clearInterval(sala.intervaloCuenta);
-            clearInterval(sala.intervaloBusqueda);
+            clearInterval(sala.intervalo);
             salas.delete(codigo);
+            return;
+        }
+
+        if (sala.fase !== "esperando") {
+            terminarPartida(codigo, "Un jugador se desconectó.");
         } else {
             enviarEstado(codigo);
         }
     });
 });
 
-servidor.listen(PORT, () => {
-    console.log(`Servidor iniciado en http://localhost:${PORT}`);
+const PUERTO = process.env.PORT || 3000;
+
+servidor.listen(PUERTO, () => {
+    console.log(`Servidor funcionando en http://localhost:${PUERTO}`);
 });
