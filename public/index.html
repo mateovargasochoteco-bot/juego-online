@@ -81,34 +81,17 @@ button {
     position: absolute;
     width: 1450px;
     height: 1200px;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    left: 0;
+    top: 0;
+    transform: translate(0, 0);
     background: #303030;
 }
-
-/* HABITACIONES */
 
 .habitacion {
     position: absolute;
     width: 350px;
     height: 300px;
-    background: #555;
-    border: none;
     z-index: 2;
-}
-
-/* PAREDES: cada habitación tiene cuatro paredes separadas */
-
-.pared {
-    position: absolute;
-    background: #171717;
-    z-index: 4;
-}
-
-/* Habitaciones: x=50, 550, 1050; y=50, 450, 850 */
-
-.habitacion {
     background:
         linear-gradient(#171717, #171717) top / 100% 13px no-repeat,
         linear-gradient(#171717, #171717) bottom / 100% 13px no-repeat,
@@ -116,8 +99,6 @@ button {
         linear-gradient(#171717, #171717) right / 13px 100% no-repeat,
         #555;
 }
-
-/* PASILLOS */
 
 .pasillo-horizontal,
 .pasillo-vertical {
@@ -136,7 +117,7 @@ button {
     height: 100px;
 }
 
-/* Puertas: aberturas de las paredes */
+/* Aberturas de las puertas */
 
 .hueco {
     position: absolute;
@@ -153,8 +134,6 @@ button {
     width: 48px;
     height: 18px;
 }
-
-/* Marcos de las puertas */
 
 .puerta {
     position: absolute;
@@ -178,7 +157,7 @@ button {
     background: #c18a45;
 }
 
-/* JUGADORES */
+/* Jugadores */
 
 .jugador {
     position: absolute;
@@ -202,7 +181,7 @@ button {
     background: #00aaff;
 }
 
-/* OBJETOS */
+/* Objetos */
 
 .objeto {
     position: absolute;
@@ -214,13 +193,13 @@ button {
     transform: translate(-50%, -50%);
 }
 
-/* VISIÓN */
+/* Capa de visión */
 
 #vision {
-    position: absolute;
+    position: fixed;
     inset: 0;
-    pointer-events: none;
     z-index: 20;
+    pointer-events: none;
 }
 
 #pantallaNegra {
@@ -229,6 +208,7 @@ button {
     background: black;
     z-index: 40;
     display: none;
+    pointer-events: none;
 }
 
 #minimapa {
@@ -308,13 +288,9 @@ button {
 
 <div id="menu">
     <h1>JUEGO DE ESCONDITE</h1>
-
     <button id="crearSala">CREAR SALA</button>
-
     <input id="codigoInput" placeholder="Código de sala">
-
     <button id="unirseSala">UNIRSE</button>
-
     <p id="mensaje"></p>
 </div>
 
@@ -325,11 +301,10 @@ button {
 
 <div id="estado">Esperando jugadores...</div>
 
-<div id="objetivo">
-    Objetivo: encontrar 3 estrellas
-</div>
+<div id="objetivo">Objetivo: encontrar 3 estrellas</div>
 
 <div id="camara">
+
     <div id="mapa">
 
         <!-- PASILLOS HORIZONTALES -->
@@ -352,19 +327,19 @@ button {
         <div class="pasillo-vertical" style="left:1180px;top:750px"></div>
 
         <!-- HABITACIONES -->
-        <div class="habitacion" id="habitacion1" style="left:50px;top:50px"></div>
-        <div class="habitacion" id="habitacion2" style="left:550px;top:50px"></div>
-        <div class="habitacion" id="habitacion3" style="left:1050px;top:50px"></div>
+        <div class="habitacion" style="left:50px;top:50px"></div>
+        <div class="habitacion" style="left:550px;top:50px"></div>
+        <div class="habitacion" style="left:1050px;top:50px"></div>
 
-        <div class="habitacion" id="habitacion4" style="left:50px;top:450px"></div>
-        <div class="habitacion" id="habitacion5" style="left:550px;top:450px"></div>
-        <div class="habitacion" id="habitacion6" style="left:1050px;top:450px"></div>
+        <div class="habitacion" style="left:50px;top:450px"></div>
+        <div class="habitacion" style="left:550px;top:450px"></div>
+        <div class="habitacion" style="left:1050px;top:450px"></div>
 
-        <div class="habitacion" id="habitacion7" style="left:50px;top:850px"></div>
-        <div class="habitacion" id="habitacion8" style="left:550px;top:850px"></div>
-        <div class="habitacion" id="habitacion9" style="left:1050px;top:850px"></div>
+        <div class="habitacion" style="left:50px;top:850px"></div>
+        <div class="habitacion" style="left:550px;top:850px"></div>
+        <div class="habitacion" style="left:1050px;top:850px"></div>
 
-        <!-- ABERTURAS HORIZONTALES: DOS EXTREMOS DE CADA PASILLO -->
+        <!-- ABERTURAS HORIZONTALES -->
         <div class="hueco hueco-h" style="left:387px;top:176px"></div>
         <div class="hueco hueco-h" style="left:545px;top:176px"></div>
         <div class="hueco hueco-h" style="left:887px;top:176px"></div>
@@ -395,7 +370,7 @@ button {
         <div class="hueco hueco-v" style="left:1201px;top:737px"></div>
         <div class="hueco hueco-v" style="left:1201px;top:845px"></div>
 
-        <!-- MARCOS DE PUERTAS HORIZONTALES -->
+        <!-- MARCOS HORIZONTALES -->
         <div class="puerta puerta-h" style="left:392px;top:176px"></div>
         <div class="puerta puerta-h" style="left:550px;top:176px"></div>
         <div class="puerta puerta-h" style="left:892px;top:176px"></div>
@@ -411,7 +386,7 @@ button {
         <div class="puerta puerta-h" style="left:892px;top:976px"></div>
         <div class="puerta puerta-h" style="left:1050px;top:976px"></div>
 
-        <!-- MARCOS DE PUERTAS VERTICALES -->
+        <!-- MARCOS VERTICALES -->
         <div class="puerta puerta-v" style="left:201px;top:342px"></div>
         <div class="puerta puerta-v" style="left:201px;top:450px"></div>
         <div class="puerta puerta-v" style="left:701px;top:342px"></div>
@@ -431,6 +406,7 @@ button {
     </div>
 </div>
 
+<div id="vision"></div>
 <div id="pantallaNegra"></div>
 
 <div id="minimapa">
@@ -460,6 +436,7 @@ const mensaje = document.getElementById("mensaje");
 const mapa = document.getElementById("mapa");
 const camara = document.getElementById("camara");
 const pantallaNegra = document.getElementById("pantallaNegra");
+const vision = document.getElementById("vision");
 
 const elementosJugadores = document.getElementById("elementosJugadores");
 const elementosObjetos = document.getElementById("elementosObjetos");
@@ -525,29 +502,31 @@ socket.on("estadoSala", datos => {
     actualizarJugadores();
     actualizarObjetos();
     actualizarInterfaz();
+    actualizarCamara();
 });
 
 socket.on("inicioCuenta", () => {
     fase = "cuenta";
     document.getElementById("mensajePartida").textContent = "¡A ESCONDERSE!";
+    actualizarInterfaz();
 });
 
 socket.on("cuentaActualizada", tiempo => {
-    document.getElementById("temporizadorPartida").textContent =
-        "Cuenta: " + tiempo;
+    document.getElementById("temporizadorPartida").textContent = "Cuenta: " + tiempo;
 });
 
 socket.on("finCuenta", () => {
     fase = "busqueda";
     document.getElementById("mensajePartida").textContent = "¡A BUSCAR!";
+    actualizarInterfaz();
+
     setTimeout(() => {
         document.getElementById("mensajePartida").textContent = "";
     }, 2500);
 });
 
 socket.on("tiempoActualizado", tiempo => {
-    document.getElementById("temporizadorPartida").textContent =
-        "Tiempo: " + tiempo;
+    document.getElementById("temporizadorPartida").textContent = "Tiempo: " + tiempo;
 });
 
 socket.on("objetoRecogido", datos => {
@@ -577,7 +556,6 @@ function actualizarInterfaz() {
     pantallaNegra.style.display =
         fase === "cuenta" && miRol === "buscador" ? "block" : "none";
 
-    // Durante la cuenta, el buscador no ve a los jugadores en su minimapa.
     dibujarMinimapa();
 }
 
@@ -589,12 +567,11 @@ function actualizarJugadores() {
 
         if (jugador.atrapado) continue;
 
-        // El buscador no ve a los escondidos durante la cuenta.
-        if (miRol === "buscador" && fase === "cuenta" && jugador.rol !== "buscador") {
+        if (miRol === "buscador" && fase === "cuenta" &&
+            jugador.rol !== "buscador") {
             continue;
         }
 
-        // Los escondidos no ven al buscador en el mapa.
         if (miRol === "escondido" && jugador.rol === "buscador") {
             continue;
         }
@@ -665,7 +642,6 @@ function dibujarMinimapa() {
         const jugador = jugadores[id];
 
         if (jugador.atrapado) continue;
-
         if (miRol === "buscador" && fase === "cuenta") continue;
         if (miRol === "escondido" && jugador.rol === "buscador") continue;
 
@@ -684,9 +660,9 @@ function dibujarMinimapa() {
 
 function dentroDeZona(px, py) {
     const habitaciones = [
-        {x:50, y:50}, {x:550, y:50}, {x:1050, y:50},
-        {x:50, y:450}, {x:550, y:450}, {x:1050, y:450},
-        {x:50, y:850}, {x:550, y:850}, {x:1050, y:850}
+        {x:50,y:50}, {x:550,y:50}, {x:1050,y:50},
+        {x:50,y:450}, {x:550,y:450}, {x:1050,y:450},
+        {x:50,y:850}, {x:550,y:850}, {x:1050,y:850}
     ];
 
     for (const h of habitaciones) {
@@ -723,10 +699,6 @@ function dentroDeZona(px, py) {
     return false;
 }
 
-/*
- * Comprueba que el jugador cruce las paredes de las habitaciones
- * solamente por las aberturas de las puertas.
- */
 function cruzaPared(ax, ay, bx, by) {
     const habitaciones = [
         {x:50,y:50}, {x:550,y:50}, {x:1050,y:50},
@@ -740,65 +712,82 @@ function cruzaPared(ax, ay, bx, by) {
         const arriba = h.y + 13;
         const abajo = h.y + 287;
 
-        // Pared izquierda y derecha: puertas en el centro vertical.
-        if ((ax < izquierda && bx >= izquierda) ||
-            (ax > derecha && bx <= derecha)) {
-            // La comprobación del borde exterior de la habitación
-            // se realiza con el centro del jugador.
-        }
-
-        // Salida por la pared derecha.
         if (ax <= derecha && bx > derecha) {
-            const puertaY = h.y + 150;
-            if (Math.abs(by - puertaY) > 24) return true;
+            if (Math.abs(by - (h.y + 150)) > 24) return true;
         }
 
-        // Entrada por la pared derecha.
         if (ax > derecha && bx <= derecha) {
-            const puertaY = h.y + 150;
-            if (Math.abs(by - puertaY) > 24) return true;
+            if (Math.abs(by - (h.y + 150)) > 24) return true;
         }
 
-        // Salida por la pared izquierda.
         if (ax >= izquierda && bx < izquierda) {
-            const puertaY = h.y + 150;
-            if (Math.abs(by - puertaY) > 24) return true;
+            if (Math.abs(by - (h.y + 150)) > 24) return true;
         }
 
-        // Entrada por la pared izquierda.
         if (ax < izquierda && bx >= izquierda) {
-            const puertaY = h.y + 150;
-            if (Math.abs(by - puertaY) > 24) return true;
+            if (Math.abs(by - (h.y + 150)) > 24) return true;
         }
 
-        // Salida por arriba y abajo.
         if (ay >= arriba && by < arriba) {
-            const puertaX = h.x + 175;
-            if (Math.abs(bx - puertaX) > 24) return true;
+            if (Math.abs(bx - (h.x + 175)) > 24) return true;
         }
 
         if (ay <= abajo && by > abajo) {
-            const puertaX = h.x + 175;
-            if (Math.abs(bx - puertaX) > 24) return true;
+            if (Math.abs(bx - (h.x + 175)) > 24) return true;
         }
 
         if (ay < arriba && by >= arriba) {
-            const puertaX = h.x + 175;
-            if (Math.abs(bx - puertaX) > 24) return true;
+            if (Math.abs(bx - (h.x + 175)) > 24) return true;
         }
 
         if (ay > abajo && by <= abajo) {
-            const puertaX = h.x + 175;
-            if (Math.abs(bx - puertaX) > 24) return true;
+            if (Math.abs(bx - (h.x + 175)) > 24) return true;
         }
     }
 
     return false;
 }
 
+/* CÁMARA CORREGIDA */
+
+function actualizarCamara() {
+    const ancho = window.innerWidth;
+    const alto = window.innerHeight;
+
+    let camX = ancho / 2 - x;
+    let camY = alto / 2 - y;
+
+    const minX = Math.min(0, ancho - anchoMapa);
+    const minY = Math.min(0, alto - altoMapa);
+
+    camX = Math.min(0, Math.max(minX, camX));
+    camY = Math.min(0, Math.max(minY, camY));
+
+    mapa.style.left = "0";
+    mapa.style.top = "0";
+    mapa.style.transform = `translate(${camX}px, ${camY}px)`;
+
+    if (miRol === "buscador" && fase === "busqueda") {
+        camara.style.background = "black";
+
+        vision.style.display = "block";
+        vision.style.background = `
+            radial-gradient(
+                circle 180px at ${x + camX}px ${y + camY}px,
+                transparent 0%,
+                rgba(0,0,0,0.25) 65%,
+                black 100%
+            )
+        `;
+    } else {
+        camara.style.background = "#252525";
+        vision.style.display = "none";
+    }
+}
+
 function mover() {
     if (!miId || !jugadores[miId] || atrapado) return;
-    if (fase === "esperando" || fase === "cuenta" && miRol === "buscador") return;
+    if (fase === "esperando" || (fase === "cuenta" && miRol === "buscador")) return;
 
     let dx = 0;
     let dy = 0;
@@ -821,7 +810,6 @@ function mover() {
         x = nuevoX;
         y = nuevoY;
     } else {
-        // Permite deslizarse por una pared sin atravesarla.
         if (dentroDeZona(x + dx, y) &&
             !cruzaPared(x, y, x + dx, y)) {
             x += dx;
@@ -843,31 +831,6 @@ function mover() {
     actualizarCamara();
 }
 
-function actualizarCamara() {
-    const ancho = window.innerWidth;
-    const alto = window.innerHeight;
-
-    const camX = ancho / 2 - x;
-    const camY = alto / 2 - y;
-
-    mapa.style.transform =
-        `translate(${camX}px, ${camY}px)`;
-
-    if (miRol === "buscador" && fase === "busqueda") {
-        const radio = 180;
-
-        const gradiente = `radial-gradient(circle ${radio}px at ${ancho/2}px ${alto/2}px,
-            transparent 0%,
-            rgba(0,0,0,0.25) 65%,
-            black 100%)`;
-
-        camara.style.background = "black";
-        document.getElementById("vision").style.background = gradiente;
-    } else {
-        camara.style.background = "#252525";
-    }
-}
-
 function intentarAtrapar() {
     if (miRol === "buscador" && fase === "busqueda") {
         socket.emit("atrapar");
@@ -886,16 +849,14 @@ window.addEventListener("keyup", e => {
     teclas[e.key] = false;
 });
 
+window.addEventListener("resize", actualizarCamara);
+
 setInterval(mover, 16);
 
 setInterval(() => {
     actualizarCamara();
     dibujarMinimapa();
 }, 50);
-
-socket.on("estadoSala", () => {
-    actualizarCamara();
-});
 </script>
 
 </body>
