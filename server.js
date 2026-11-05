@@ -1,3 +1,4 @@
+
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -14,20 +15,27 @@ const salas = new Map();
 const ANCHO_MAPA = 1450;
 const ALTO_MAPA = 1200;
 const MAX_JUGADORES = 4;
+const CANTIDAD_ESTRELLAS = 18;
+
+// --------------------------------------------------
+// GENERAR CÓDIGO
+// --------------------------------------------------
 
 function generarCodigo() {
     const caracteres = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     let codigo = "";
 
     for (let i = 0; i < 5; i++) {
-        codigo += caracteres[Math.floor(Math.random() * caracteres.length)];
+        codigo += caracteres[
+            Math.floor(Math.random() * caracteres.length)
+        ];
     }
 
     return codigo;
 }
 
 // --------------------------------------------------
-// ZONAS POR LAS QUE SE PUEDE CAMINAR
+// ZONAS TRANSITABLES
 // --------------------------------------------------
 
 function crearZonasTransitables() {
@@ -80,7 +88,7 @@ function crearZonasTransitables() {
         }
     }
 
-    // Conexiones horizontales entre habitaciones y pasillos
+    // Conexiones horizontales
     for (let fila = 0; fila < 3; fila++) {
         const centroY = 200 + fila * 400;
 
@@ -103,7 +111,7 @@ function crearZonasTransitables() {
         }
     }
 
-    // Conexiones verticales entre habitaciones y pasillos
+    // Conexiones verticales
     for (let columna = 0; columna < 3; columna++) {
         const izquierda = 50 + columna * 500;
         const centroX = izquierda + 175;
@@ -142,6 +150,74 @@ function dentroDeZona(x, y) {
 }
 
 // --------------------------------------------------
+// ESTRELLAS
+// --------------------------------------------------
+
+// Hay 9 habitaciones: 3 columnas y 3 filas.
+
+function generarPosicionEstrella(habitacion) {
+    const columna = habitacion % 3;
+    const fila = Math.floor(habitacion / 3);
+
+    const inicioX = 50 + columna * 500;
+    const inicioY = 50 + fila * 400;
+
+    return {
+        x: inicioX + 35 + Math.random() * 280,
+        y: inicioY + 35 + Math.random() * 230
+    };
+}
+
+function crearEstrellas() {
+    const estrellas = [];
+
+    for (let i = 0; i < CANTIDAD_ESTRELLAS; i++) {
+        const habitacion = i % 9;
+        const posicion = generarPosicionEstrella(habitacion);
+
+        estrellas.push({
+            id: i + 1,
+            x: posicion.x,
+            y: posicion.y,
+            habitacion,
+            recogida: false
+        });
+    }
+
+    return estrellas;
+}
+
+// Mover las estrellas a otras habitaciones.
+// Las estrellas recogidas permanecen recogidas.
+
+function moverEstrellas(codigo) {
+    const sala = salas.get(codigo);
+
+    if (!sala || sala.fase !== "jugando") return;
+
+    sala.estrellas.forEach(estrella => {
+        if (estrella.recogida) return;
+
+        let nuevaHabitacion;
+
+        do {
+            nuevaHabitacion = Math.floor(Math.random() * 9);
+        } while (nuevaHabitacion === estrella.habitacion);
+
+        estrella.habitacion = nuevaHabitacion;
+
+        const posicion = generarPosicionEstrella(
+            nuevaHabitacion
+        );
+
+        estrella.x = posicion.x;
+        estrella.y = posicion.y;
+    });
+
+    enviarEstado(codigo);
+}
+
+// --------------------------------------------------
 // CREAR SALA
 // --------------------------------------------------
 
@@ -154,16 +230,18 @@ function crearSala(socket) {
 
     const sala = {
         jugadores: new Map(),
+
         fase: "esperando",
+
         tiempo: 200,
         cuenta: 15,
+
         buscador: null,
-        estrellas: [
-            { id: 1, x: 220, y: 200, recogida: false },
-            { id: 2, x: 720, y: 600, recogida: false },
-            { id: 3, x: 1220, y: 1000, recogida: false }
-        ],
-        intervalo: null
+
+        estrellas: crearEstrellas(),
+
+        intervalo: null,
+        intervaloEstrellas: null
     };
 
     salas.set(codigo, sala);
@@ -195,12 +273,39 @@ function enviarEstado(codigo) {
 
     io.to(codigo).emit("estadoSala", {
         jugadores: Array.from(sala.jugadores.values()),
+
         fase: sala.fase,
+
         tiempo: sala.tiempo,
         cuenta: sala.cuenta,
+
         buscador: sala.buscador,
+
         estrellas: sala.estrellas
     });
+}
+
+// --------------------------------------------------
+// INICIAR MOVIMIENTO DE ESTRELLAS
+// --------------------------------------------------
+
+function iniciarMovimientoEstrellas(codigo) {
+    const sala = salas.get(codigo);
+
+    if (!sala) return;
+
+    clearInterval(sala.intervaloEstrellas);
+
+    sala.intervaloEstrellas = setInterval(() => {
+        if (sala.fase !== "jugando") {
+            clearInterval(sala.intervaloEstrellas);
+            sala.intervaloEstrellas = null;
+            return;
+        }
+
+        moverEstrellas(codigo);
+
+    }, 2000);
 }
 
 // --------------------------------------------------
@@ -210,17 +315,23 @@ function enviarEstado(codigo) {
 function iniciarPartida(codigo) {
     const sala = salas.get(codigo);
 
-    if (!sala || sala.jugadores.size !== MAX_JUGADORES) return;
+    if (!sala || sala.jugadores.size !== MAX_JUGADORES) {
+        return;
+    }
 
     const jugadores = Array.from(sala.jugadores.values());
-    const indiceBuscador = Math.floor(Math.random() * jugadores.length);
+
+    const indiceBuscador = Math.floor(
+        Math.random() * jugadores.length
+    );
 
     sala.buscador = jugadores[indiceBuscador].id;
 
     jugadores.forEach(jugador => {
-        jugador.rol = jugador.id === sala.buscador
-            ? "buscador"
-            : "escondido";
+        jugador.rol =
+            jugador.id === sala.buscador
+                ? "buscador"
+                : "escondido";
 
         jugador.atrapado = false;
     });
@@ -229,37 +340,59 @@ function iniciarPartida(codigo) {
     sala.cuenta = 15;
     sala.tiempo = 200;
 
-    sala.estrellas.forEach(estrella => {
-        estrella.recogida = false;
-    });
+    // Reiniciar estrellas
+    sala.estrellas = crearEstrellas();
+
+    clearInterval(sala.intervalo);
+    clearInterval(sala.intervaloEstrellas);
+
+    sala.intervaloEstrellas = null;
 
     enviarEstado(codigo);
 
-    clearInterval(sala.intervalo);
-
     sala.intervalo = setInterval(() => {
+
+        // CUENTA REGRESIVA
         if (sala.fase === "cuenta") {
             sala.cuenta--;
 
             if (sala.cuenta <= 0) {
+                sala.cuenta = 0;
+
+                // Comienza la partida.
+                // Ahora las estrellas pueden aparecer.
+
                 sala.fase = "jugando";
+
+                enviarEstado(codigo);
+
+                // Las estrellas cambiarán de habitación
+                // cada dos segundos.
+
+                iniciarMovimientoEstrellas(codigo);
+            } else {
                 enviarEstado(codigo);
             }
 
-            enviarEstado(codigo);
             return;
         }
 
+        // PARTIDA EN CURSO
         if (sala.fase === "jugando") {
             sala.tiempo--;
 
             if (sala.tiempo <= 0) {
-                terminarPartida(codigo, "¡Ganaron los escondidos!");
+                terminarPartida(
+                    codigo,
+                    "¡Ganaron los escondidos!"
+                );
+
                 return;
             }
 
             enviarEstado(codigo);
         }
+
     }, 1000);
 }
 
@@ -275,8 +408,13 @@ function terminarPartida(codigo, mensaje) {
     sala.fase = "terminada";
 
     clearInterval(sala.intervalo);
+    clearInterval(sala.intervaloEstrellas);
+
+    sala.intervalo = null;
+    sala.intervaloEstrellas = null;
 
     io.to(codigo).emit("finPartida", mensaje);
+
     enviarEstado(codigo);
 }
 
@@ -285,13 +423,19 @@ function terminarPartida(codigo, mensaje) {
 // --------------------------------------------------
 
 io.on("connection", socket => {
+
     console.log("Jugador conectado:", socket.id);
+
+    // CREAR SALA
 
     socket.on("crearSala", () => {
         crearSala(socket);
     });
 
+    // UNIRSE A SALA
+
     socket.on("unirseSala", codigo => {
+
         codigo = String(codigo).toUpperCase().trim();
 
         const sala = salas.get(codigo);
@@ -316,8 +460,10 @@ io.on("connection", socket => {
 
         sala.jugadores.set(socket.id, {
             id: socket.id,
+
             x: 200 + Math.random() * 80,
             y: 200 + Math.random() * 80,
+
             rol: null,
             atrapado: false
         });
@@ -336,6 +482,7 @@ io.on("connection", socket => {
     // --------------------------------------------------
 
     socket.on("moverJugador", datos => {
+
         const codigo = socket.sala;
         const sala = salas.get(codigo);
 
@@ -357,7 +504,10 @@ io.on("connection", socket => {
         const nuevoX = Number(datos.x);
         const nuevoY = Number(datos.y);
 
-        if (!Number.isFinite(nuevoX) || !Number.isFinite(nuevoY)) {
+        if (
+            !Number.isFinite(nuevoX) ||
+            !Number.isFinite(nuevoY)
+        ) {
             return;
         }
 
@@ -366,7 +516,7 @@ io.on("connection", socket => {
             nuevoY - jugador.y
         );
 
-        // Evita saltos de posición demasiado grandes
+        // Evitar saltos de posición demasiado grandes
         if (distancia > 15) return;
 
         // Las paredes bloquean el movimiento
@@ -375,9 +525,14 @@ io.on("connection", socket => {
         jugador.x = nuevoX;
         jugador.y = nuevoY;
 
-        // Recoger estrellas
-        if (jugador.rol === "escondido") {
+        // RECOGER ESTRELLAS
+        if (
+            sala.fase === "jugando" &&
+            jugador.rol === "escondido"
+        ) {
+
             sala.estrellas.forEach(estrella => {
+
                 if (estrella.recogida) return;
 
                 const distanciaEstrella = Math.hypot(
@@ -390,11 +545,14 @@ io.on("connection", socket => {
                 }
             });
 
+            // Comprobar si se recogieron todas
             if (sala.estrellas.every(e => e.recogida)) {
+
                 terminarPartida(
                     codigo,
                     "¡Los escondidos encontraron todas las estrellas!"
                 );
+
                 return;
             }
         }
@@ -407,6 +565,7 @@ io.on("connection", socket => {
     // --------------------------------------------------
 
     socket.on("atraparJugador", idObjetivo => {
+
         const codigo = socket.sala;
         const sala = salas.get(codigo);
 
@@ -432,11 +591,15 @@ io.on("connection", socket => {
 
         enviarEstado(codigo);
 
-        const escondidos = Array.from(sala.jugadores.values())
-            .filter(j => j.rol === "escondido");
+        const escondidos = Array.from(
+            sala.jugadores.values()
+        ).filter(j => j.rol === "escondido");
 
         if (escondidos.every(j => j.atrapado)) {
-            terminarPartida(codigo, "¡El buscador atrapó a todos!");
+            terminarPartida(
+                codigo,
+                "¡El buscador atrapó a todos!"
+            );
         }
     });
 
@@ -445,6 +608,7 @@ io.on("connection", socket => {
     // --------------------------------------------------
 
     socket.on("disconnect", () => {
+
         const codigo = socket.sala;
 
         if (!codigo) return;
@@ -456,21 +620,36 @@ io.on("connection", socket => {
         sala.jugadores.delete(socket.id);
 
         if (sala.jugadores.size === 0) {
+
             clearInterval(sala.intervalo);
+            clearInterval(sala.intervaloEstrellas);
+
             salas.delete(codigo);
+
             return;
         }
 
         if (sala.fase !== "esperando") {
-            terminarPartida(codigo, "Un jugador se desconectó.");
+
+            terminarPartida(
+                codigo,
+                "Un jugador se desconectó."
+            );
+
         } else {
             enviarEstado(codigo);
         }
     });
 });
 
+// --------------------------------------------------
+// SERVIDOR
+// --------------------------------------------------
+
 const PUERTO = process.env.PORT || 3000;
 
 servidor.listen(PUERTO, () => {
-    console.log(`Servidor funcionando en http://localhost:${PUERTO}`);
+    console.log(
+        `Servidor funcionando en http://localhost:${PUERTO}`
+    );
 });
