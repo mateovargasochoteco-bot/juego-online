@@ -383,7 +383,8 @@ function iniciarPartida(codigo) {
             if (sala.tiempo <= 0) {
                 terminarPartida(
                     codigo,
-                    "¡Ganaron los escondidos!"
+                    "¡Ganaron los escondidos!",
+                    "escondidos"
                 );
 
                 return;
@@ -399,7 +400,7 @@ function iniciarPartida(codigo) {
 // TERMINAR PARTIDA
 // --------------------------------------------------
 
-function terminarPartida(codigo, mensaje) {
+function terminarPartida(codigo, mensaje, ganador = null) {
     const sala = salas.get(codigo);
 
     if (!sala) return;
@@ -412,7 +413,7 @@ function terminarPartida(codigo, mensaje) {
     sala.intervalo = null;
     sala.intervaloEstrellas = null;
 
-    io.to(codigo).emit("finPartida", mensaje);
+    io.to(codigo).emit("finPartida", { mensaje, ganador });
 
     enviarEstado(codigo);
 }
@@ -549,7 +550,8 @@ io.on("connection", socket => {
 
                 terminarPartida(
                     codigo,
-                    "¡Los escondidos encontraron todas las estrellas!"
+                    "¡Los escondidos encontraron todas las estrellas!",
+                    "escondidos"
                 );
 
                 return;
@@ -588,6 +590,7 @@ io.on("connection", socket => {
 
         objetivo.atrapado = true;
 
+        io.to(codigo).emit("jugadorAtrapado", objetivo.id);
         enviarEstado(codigo);
 
         const escondidos = Array.from(
@@ -597,7 +600,8 @@ io.on("connection", socket => {
         if (escondidos.every(j => j.atrapado)) {
             terminarPartida(
                 codigo,
-                "¡El buscador atrapó a todos!"
+                "¡El buscador atrapó a todos!",
+                "buscador"
             );
         }
     });
