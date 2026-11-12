@@ -153,8 +153,80 @@ input{width:220px;text-align:center;text-transform:uppercase}
 <button onclick="location.reload()">Volver a jugar</button>
 </div>
 
+<!-- EFECTOS DE SONIDO: guardar estos MP3 en la carpeta public -->
+<audio id="sonido-pasos" src="/steps1.mp3" preload="auto" loop></audio>
+<audio id="sonido-puertas" src="/4-abrir-puerta.mp3" preload="auto"></audio>
+<audio id="sonido-conteo" src="/cuenta-regresiva.mp3" preload="auto"></audio>
+<audio id="sonido-capturar" src="/pikachu-capturar.mp3" preload="auto"></audio>
+<audio id="sonido-victoria" src="/rocky-victoria.mp3" preload="auto"></audio>
+<audio id="sonido-derrota" src="/fails-ohhhh.mp3" preload="auto"></audio>
+
 <script>
 const socket=io();
+
+// --------------------------------------------------
+// EFECTOS DE SONIDO
+// --------------------------------------------------
+
+const sonidos = {
+    pasos: document.getElementById("sonido-pasos"),
+    puertas: document.getElementById("sonido-puertas"),
+    conteo: document.getElementById("sonido-conteo"),
+    capturar: document.getElementById("sonido-capturar"),
+    victoria: document.getElementById("sonido-victoria"),
+    derrota: document.getElementById("sonido-derrota")
+};
+
+function reproducirSonido(nombre) {
+    const audio = sonidos[nombre];
+    if (!audio) return;
+
+    audio.currentTime = 0;
+    audio.play().catch(() => {
+        // El navegador puede bloquear el audio hasta que el jugador interactúe.
+    });
+}
+
+function iniciarSonidoPasos() {
+    const audio = sonidos.pasos;
+    if (!audio || !audio.paused) return;
+
+    audio.play().catch(() => {});
+}
+
+function detenerSonidoPasos() {
+    const audio = sonidos.pasos;
+    if (!audio) return;
+
+    audio.pause();
+    audio.currentTime = 0;
+}
+
+// Se habilitan los audios desde el clic inicial del jugador.
+function prepararAudios() {
+    Object.values(sonidos).forEach(audio => {
+        if (!audio) return;
+
+        const volumenOriginal = audio.volume;
+        audio.volume = 0;
+
+        const reproduccion = audio.play();
+
+        if (reproduccion && typeof reproduccion.then === "function") {
+            reproduccion.then(() => {
+                audio.pause();
+                audio.currentTime = 0;
+                audio.volume = volumenOriginal;
+            }).catch(() => {
+                audio.volume = volumenOriginal;
+            });
+        } else {
+            audio.pause();
+            audio.currentTime = 0;
+            audio.volume = volumenOriginal;
+        }
+    });
+}
 
 const menu=document.getElementById("menu");
 const juego=document.getElementById("juego");
@@ -171,7 +243,9 @@ const vision=document.getElementById("vision");
 let miId=null;
 let miRol=null;
 let fase="esperando";
+let faseAnterior="esperando";
 let atrapado=false;
+let ultimoSonidoPuerta=0;
 
 let x=200;
 let y=200;
@@ -239,6 +313,46 @@ return zonas;
 
 const zonasTransitables=crearZonasTransitables();
 
+function crearZonasPuertas() {
+    const puertas = [];
+
+    // Puertas que conectan habitaciones con pasillos horizontales.
+    for (let fila = 0; fila < 3; fila++) {
+        const centroY = 200 + fila * 400;
+
+        for (let columna = 0; columna < 2; columna++) {
+            const izquierda = 50 + columna * 500;
+
+            puertas.push({ x: izquierda + 337, y: centroY - 24, ancho: 26, alto: 48 });
+            puertas.push({ x: izquierda + 487, y: centroY - 24, ancho: 26, alto: 48 });
+        }
+    }
+
+    // Puertas que conectan habitaciones con pasillos verticales.
+    for (let columna = 0; columna < 3; columna++) {
+        const izquierda = 50 + columna * 500;
+        const centroX = izquierda + 175;
+
+        for (let fila = 0; fila < 2; fila++) {
+            const arriba = 50 + fila * 400;
+
+            puertas.push({ x: centroX - 24, y: arriba + 287, ancho: 48, alto: 26 });
+            puertas.push({ x: centroX - 24, y: arriba + 387, ancho: 48, alto: 26 });
+        }
+    }
+
+    return puertas;
+}
+
+const zonasPuertas = crearZonasPuertas();
+
+function dentroDePuerta(px, py) {
+    return zonasPuertas.some(puerta =>
+        px >= puerta.x && px <= puerta.x + puerta.ancho &&
+        py >= puerta.y && py <= puerta.y + puerta.alto
+    );
+}
+
 function dentroDeZona(px,py){
 return zonasTransitables.some(zona=>
 px>=zona.x&&px<=zona.x+zona.ancho&&
@@ -249,10 +363,12 @@ py>=zona.y&&py<=zona.y+zona.alto
 // CREAR Y UNIRSE A SALAS
 
 document.getElementById("crear").addEventListener("click",()=>{
+prepararAudios();
 socket.emit("crearSala");
 });
 
 document.getElementById("unirse").addEventListener("click",()=>{
+prepararAudios();
 const codigo=document.getElementById("codigo").value.trim();
 
 if(codigo.length!==5){
@@ -300,6 +416,17 @@ posicionInicializada=true;
 }
 });
 
+if (estado.fase === "cuenta" && faseAnterior !== "cuenta") {
+    reproducirSonido("conteo");
+}
+
+if (estado.fase !== "cuenta" && faseAnterior === "cuenta") {
+    // La cuenta terminó; el sonido de cuenta no debe seguir reproduciéndose.
+    sonidos.conteo.pause();
+    sonidos.conteo.currentTime = 0;
+}
+
+faseAnterior = estado.fase;
 fase=estado.fase;
 
 document.getElementById("tiempo").textContent=
@@ -468,9 +595,14 @@ mapa.style.transform=`translate(${camX}px,${camY}px)`;
 // MOVIMIENTO
 
 function mover(){
-if(!miId||!jugadores[miId]||atrapado)return;
-if(fase==="esperando")return;
-if(fase==="cuenta"&&miRol==="buscador")return;
+if(!miId||!jugadores[miId]||atrapado){
+    detenerSonidoPasos();
+    return;
+}
+if(fase==="esperando"||(fase==="cuenta"&&miRol==="buscador")){
+    detenerSonidoPasos();
+    return;
+}
 
 let dx=0;
 let dy=0;
@@ -480,28 +612,51 @@ if(teclas["s"]||teclas["ArrowDown"])dy++;
 if(teclas["a"]||teclas["ArrowLeft"])dx--;
 if(teclas["d"]||teclas["ArrowRight"])dx++;
 
-if(dx===0&&dy===0)return;
+if(dx===0&&dy===0){
+    detenerSonidoPasos();
+    return;
+}
 
 const magnitud=Math.hypot(dx,dy);
 dx=dx/magnitud*VELOCIDAD;
 dy=dy/magnitud*VELOCIDAD;
 
+const anteriorX=x;
+const anteriorY=y;
 const nuevoX=x+dx;
 const nuevoY=y+dy;
 
 if(dentroDeZona(nuevoX,nuevoY)){
-x=nuevoX;
-y=nuevoY;
+    x=nuevoX;
+    y=nuevoY;
 }else{
-if(dx!==0&&dentroDeZona(x+dx,y))x+=dx;
-if(dy!==0&&dentroDeZona(x,y+dy))y+=dy;
+    if(dx!==0&&dentroDeZona(x+dx,y))x+=dx;
+    if(dy!==0&&dentroDeZona(x,y+dy))y+=dy;
+}
+
+const seMovio = x !== anteriorX || y !== anteriorY;
+
+if(seMovio){
+    iniciarSonidoPasos();
+
+    // Reproducir el sonido al entrar en una zona de puerta.
+    const entroEnPuerta = !dentroDePuerta(anteriorX, anteriorY) &&
+                          dentroDePuerta(x, y);
+    const ahoraPuerta = Date.now();
+
+    if(entroEnPuerta && ahoraPuerta - ultimoSonidoPuerta > 650){
+        reproducirSonido("puertas");
+        ultimoSonidoPuerta = ahoraPuerta;
+    }
+}else{
+    detenerSonidoPasos();
 }
 
 const ahora=Date.now();
 
 if(ahora-ultimoEnvio>=45){
-socket.emit("moverJugador",{x,y});
-ultimoEnvio=ahora;
+    socket.emit("moverJugador",{x,y});
+    ultimoEnvio=ahora;
 }
 
 actualizarJugadores();
@@ -534,6 +689,7 @@ teclas[evento.key.toLowerCase()]=false;
 
 window.addEventListener("blur",()=>{
 teclas={};
+detenerSonidoPasos();
 });
 
 // ATRAPAR
@@ -564,11 +720,28 @@ socket.emit("atraparJugador",objetivo.id);
 }
 }
 
+// SONIDO CUANDO EL BUSCADOR ATRAPA A ALGUIEN
+socket.on("jugadorAtrapado", idJugador => {
+    reproducirSonido("capturar");
+});
+
 // FIN DE PARTIDA
 
-socket.on("finPartida",mensaje=>{
-document.getElementById("texto-resultado").textContent=mensaje;
-document.getElementById("resultado").style.display="flex";
+socket.on("finPartida",datos=>{
+    const mensaje = typeof datos === "string" ? datos : datos.mensaje;
+    const ganador = typeof datos === "string" ? null : datos.ganador;
+
+    document.getElementById("texto-resultado").textContent=mensaje;
+    document.getElementById("resultado").style.display="flex";
+    detenerSonidoPasos();
+
+    if (ganador) {
+        const gane =
+            (ganador === "buscador" && miRol === "buscador") ||
+            (ganador === "escondidos" && miRol === "escondido");
+
+        reproducirSonido(gane ? "victoria" : "derrota");
+    }
 });
 
 window.addEventListener("resize",actualizarCamara);
