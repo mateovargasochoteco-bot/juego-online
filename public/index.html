@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -153,7 +154,7 @@ input{width:220px;text-align:center;text-transform:uppercase}
 <button onclick="location.reload()">Volver a jugar</button>
 </div>
 
-<!-- EFECTOS DE SONIDO: guardar estos MP3 en la carpeta public -->
+<!-- Efectos de sonido: colocar estos seis MP3 dentro de public -->
 <audio id="sonido-pasos" src="/steps1.mp3" preload="auto" loop></audio>
 <audio id="sonido-puertas" src="/4-abrir-puerta.mp3" preload="auto"></audio>
 <audio id="sonido-conteo" src="/cuenta-regresiva.mp3" preload="auto"></audio>
@@ -167,7 +168,6 @@ const socket=io();
 // --------------------------------------------------
 // EFECTOS DE SONIDO
 // --------------------------------------------------
-
 const sonidos = {
     pasos: document.getElementById("sonido-pasos"),
     puertas: document.getElementById("sonido-puertas"),
@@ -180,53 +180,45 @@ const sonidos = {
 function reproducirSonido(nombre) {
     const audio = sonidos[nombre];
     if (!audio) return;
-
     audio.currentTime = 0;
-    audio.play().catch(() => {
-        // El navegador puede bloquear el audio hasta que el jugador interactúe.
-    });
+    audio.play().catch(() => {});
 }
 
 function iniciarSonidoPasos() {
     const audio = sonidos.pasos;
-    if (!audio || !audio.paused) return;
-
-    audio.play().catch(() => {});
+    if (audio && audio.paused) audio.play().catch(() => {});
 }
 
 function detenerSonidoPasos() {
     const audio = sonidos.pasos;
     if (!audio) return;
-
     audio.pause();
     audio.currentTime = 0;
 }
 
-// Se habilitan los audios desde el clic inicial del jugador.
+// Habilitar la reproducción después de una interacción del usuario.
 function prepararAudios() {
     Object.values(sonidos).forEach(audio => {
         if (!audio) return;
-
-        const volumenOriginal = audio.volume;
+        const volumen = audio.volume;
         audio.volume = 0;
-
-        const reproduccion = audio.play();
-
-        if (reproduccion && typeof reproduccion.then === "function") {
-            reproduccion.then(() => {
+        const intento = audio.play();
+        if (intento && typeof intento.then === "function") {
+            intento.then(() => {
                 audio.pause();
                 audio.currentTime = 0;
-                audio.volume = volumenOriginal;
-            }).catch(() => {
-                audio.volume = volumenOriginal;
-            });
+                audio.volume = volumen;
+            }).catch(() => { audio.volume = volumen; });
         } else {
             audio.pause();
             audio.currentTime = 0;
-            audio.volume = volumenOriginal;
+            audio.volume = volumen;
         }
     });
 }
+
+let faseAnterior = "esperando";
+let ultimoSonidoPuerta = 0;
 
 const menu=document.getElementById("menu");
 const juego=document.getElementById("juego");
@@ -243,9 +235,7 @@ const vision=document.getElementById("vision");
 let miId=null;
 let miRol=null;
 let fase="esperando";
-let faseAnterior="esperando";
 let atrapado=false;
-let ultimoSonidoPuerta=0;
 
 let x=200;
 let y=200;
@@ -313,46 +303,6 @@ return zonas;
 
 const zonasTransitables=crearZonasTransitables();
 
-function crearZonasPuertas() {
-    const puertas = [];
-
-    // Puertas que conectan habitaciones con pasillos horizontales.
-    for (let fila = 0; fila < 3; fila++) {
-        const centroY = 200 + fila * 400;
-
-        for (let columna = 0; columna < 2; columna++) {
-            const izquierda = 50 + columna * 500;
-
-            puertas.push({ x: izquierda + 337, y: centroY - 24, ancho: 26, alto: 48 });
-            puertas.push({ x: izquierda + 487, y: centroY - 24, ancho: 26, alto: 48 });
-        }
-    }
-
-    // Puertas que conectan habitaciones con pasillos verticales.
-    for (let columna = 0; columna < 3; columna++) {
-        const izquierda = 50 + columna * 500;
-        const centroX = izquierda + 175;
-
-        for (let fila = 0; fila < 2; fila++) {
-            const arriba = 50 + fila * 400;
-
-            puertas.push({ x: centroX - 24, y: arriba + 287, ancho: 48, alto: 26 });
-            puertas.push({ x: centroX - 24, y: arriba + 387, ancho: 48, alto: 26 });
-        }
-    }
-
-    return puertas;
-}
-
-const zonasPuertas = crearZonasPuertas();
-
-function dentroDePuerta(px, py) {
-    return zonasPuertas.some(puerta =>
-        px >= puerta.x && px <= puerta.x + puerta.ancho &&
-        py >= puerta.y && py <= puerta.y + puerta.alto
-    );
-}
-
 function dentroDeZona(px,py){
 return zonasTransitables.some(zona=>
 px>=zona.x&&px<=zona.x+zona.ancho&&
@@ -419,13 +369,10 @@ posicionInicializada=true;
 if (estado.fase === "cuenta" && faseAnterior !== "cuenta") {
     reproducirSonido("conteo");
 }
-
 if (estado.fase !== "cuenta" && faseAnterior === "cuenta") {
-    // La cuenta terminó; el sonido de cuenta no debe seguir reproduciéndose.
     sonidos.conteo.pause();
     sonidos.conteo.currentTime = 0;
 }
-
 faseAnterior = estado.fase;
 fase=estado.fase;
 
@@ -592,17 +539,39 @@ camY=Math.min(0,Math.max(alto-1200,camY));
 mapa.style.transform=`translate(${camX}px,${camY}px)`;
 }
 
+// Zonas de las puertas: se usan únicamente para detectar el sonido al cruzarlas.
+function crearZonasPuertas() {
+    const puertas = [];
+    for (let fila = 0; fila < 3; fila++) {
+        const centroY = 200 + fila * 400;
+        for (let columna = 0; columna < 2; columna++) {
+            const izquierda = 50 + columna * 500;
+            puertas.push({x: izquierda + 337, y: centroY - 24, ancho: 26, alto: 48});
+            puertas.push({x: izquierda + 487, y: centroY - 24, ancho: 26, alto: 48});
+        }
+    }
+    for (let columna = 0; columna < 3; columna++) {
+        const izquierda = 50 + columna * 500;
+        const centroX = izquierda + 175;
+        for (let fila = 0; fila < 2; fila++) {
+            const arriba = 50 + fila * 400;
+            puertas.push({x: centroX - 24, y: arriba + 287, ancho: 48, alto: 26});
+            puertas.push({x: centroX - 24, y: arriba + 387, ancho: 48, alto: 26});
+        }
+    }
+    return puertas;
+}
+const zonasPuertas = crearZonasPuertas();
+function dentroDePuerta(px, py) {
+    return zonasPuertas.some(p => px >= p.x && px <= p.x + p.ancho && py >= p.y && py <= p.y + p.alto);
+}
+
 // MOVIMIENTO
 
 function mover(){
-if(!miId||!jugadores[miId]||atrapado){
-    detenerSonidoPasos();
-    return;
-}
-if(fase==="esperando"||(fase==="cuenta"&&miRol==="buscador")){
-    detenerSonidoPasos();
-    return;
-}
+if(!miId||!jugadores[miId]||atrapado){detenerSonidoPasos();return;}
+if(fase==="esperando"){detenerSonidoPasos();return;}
+if(fase==="cuenta"&&miRol==="buscador"){detenerSonidoPasos();return;}
 
 let dx=0;
 let dy=0;
@@ -612,51 +581,43 @@ if(teclas["s"]||teclas["ArrowDown"])dy++;
 if(teclas["a"]||teclas["ArrowLeft"])dx--;
 if(teclas["d"]||teclas["ArrowRight"])dx++;
 
-if(dx===0&&dy===0){
-    detenerSonidoPasos();
-    return;
-}
+if(dx===0&&dy===0){detenerSonidoPasos();return;}
 
+const anteriorX=x;
+const anteriorY=y;
 const magnitud=Math.hypot(dx,dy);
 dx=dx/magnitud*VELOCIDAD;
 dy=dy/magnitud*VELOCIDAD;
 
-const anteriorX=x;
-const anteriorY=y;
 const nuevoX=x+dx;
 const nuevoY=y+dy;
 
 if(dentroDeZona(nuevoX,nuevoY)){
-    x=nuevoX;
-    y=nuevoY;
+x=nuevoX;
+y=nuevoY;
 }else{
-    if(dx!==0&&dentroDeZona(x+dx,y))x+=dx;
-    if(dy!==0&&dentroDeZona(x,y+dy))y+=dy;
+if(dx!==0&&dentroDeZona(x+dx,y))x+=dx;
+if(dy!==0&&dentroDeZona(x,y+dy))y+=dy;
 }
 
 const seMovio = x !== anteriorX || y !== anteriorY;
-
-if(seMovio){
+if (seMovio) {
     iniciarSonidoPasos();
-
-    // Reproducir el sonido al entrar en una zona de puerta.
-    const entroEnPuerta = !dentroDePuerta(anteriorX, anteriorY) &&
-                          dentroDePuerta(x, y);
+    const entroEnPuerta = !dentroDePuerta(anteriorX, anteriorY) && dentroDePuerta(x, y);
     const ahoraPuerta = Date.now();
-
-    if(entroEnPuerta && ahoraPuerta - ultimoSonidoPuerta > 650){
+    if (entroEnPuerta && ahoraPuerta - ultimoSonidoPuerta > 650) {
         reproducirSonido("puertas");
         ultimoSonidoPuerta = ahoraPuerta;
     }
-}else{
+} else {
     detenerSonidoPasos();
 }
 
 const ahora=Date.now();
 
 if(ahora-ultimoEnvio>=45){
-    socket.emit("moverJugador",{x,y});
-    ultimoEnvio=ahora;
+socket.emit("moverJugador",{x,y});
+ultimoEnvio=ahora;
 }
 
 actualizarJugadores();
@@ -720,14 +681,13 @@ socket.emit("atraparJugador",objetivo.id);
 }
 }
 
-// SONIDO CUANDO EL BUSCADOR ATRAPA A ALGUIEN
-socket.on("jugadorAtrapado", idJugador => {
+// FIN DE PARTIDA
+
+socket.on("jugadorAtrapado", () => {
     reproducirSonido("capturar");
 });
 
-// FIN DE PARTIDA
-
-socket.on("finPartida",datos=>{
+socket.on("finPartida", datos => {
     const mensaje = typeof datos === "string" ? datos : datos.mensaje;
     const ganador = typeof datos === "string" ? null : datos.ganador;
 
@@ -739,7 +699,6 @@ socket.on("finPartida",datos=>{
         const gane =
             (ganador === "buscador" && miRol === "buscador") ||
             (ganador === "escondidos" && miRol === "escondido");
-
         reproducirSonido(gane ? "victoria" : "derrota");
     }
 });
