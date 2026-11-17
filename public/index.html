@@ -526,16 +526,20 @@ rgba(0,0,0,0.8) 100%
 // CÁMARA
 
 function actualizarCamara(){
-const ancho=camara.clientWidth;
-const alto=camara.clientHeight;
+    const ancho=camara.clientWidth;
+    const alto=camara.clientHeight;
 
-let camX=ancho/2-x;
-let camY=alto/2-y;
+    // Centrar al buscador en la pantalla.
+    let camX=ancho/2-x;
+    let camY=alto/2-y;
 
-camX=Math.min(0,Math.max(ancho-1450,camX));
-camY=Math.min(0,Math.max(alto-1200,camY));
+    // Los escondidos conservan los límites anteriores del mapa.
+    if(miRol!=="buscador"){
+        camX=Math.min(0,Math.max(ancho-1450,camX));
+        camY=Math.min(0,Math.max(alto-1200,camY));
+    }
 
-mapa.style.transform=`translate(${camX}px,${camY}px)`;
+    mapa.style.transform=`translate(${camX}px,${camY}px)`;
 }
 
 // Zonas de las puertas: se usan únicamente para detectar el sonido al cruzarlas.
